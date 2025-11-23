@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="StatApplication" type="Application" factoryName="Application">
+  <configuration default="false" name="ru.practicum.statserver.StatApplication" type="Application" factoryName="Application">
     <option name="ALTERNATIVE_JRE_PATH" value="corretto-21" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="MAIN_CLASS_NAME" value="ewm.StatApplication" />
+    <option name="MAIN_CLASS_NAME" value="ru.practicum.statserver.StatApplication" />
     <module name="stat-server" />
     <option name="VM_PARAMETERS" value="-Dspring.profiles.active=test" />
     <method v="2">
