@@ -1,6 +1,6 @@
-package ewm.client;
+package ru.practicum.client;
 
-import ewm.dto.StatsParamDto;
+import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 

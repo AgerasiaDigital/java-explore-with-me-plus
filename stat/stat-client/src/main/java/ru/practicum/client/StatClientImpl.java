@@ -1,4 +1,4 @@
-package ewm.client;
+package ru.practicum.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import ewm.dto.StatsParamDto;
+import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 
@@ -26,7 +26,7 @@ public class StatClientImpl implements StatClient {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
-    public StatClientImpl(@Value("http://localhost:9090") String statUrl) {
+    public StatClientImpl(@Value("${stat-service.url:http://localhost:9090}") String statUrl) {
         this.statUrl = statUrl;
         restClient = RestClient.builder().baseUrl(statUrl).build();
     }
