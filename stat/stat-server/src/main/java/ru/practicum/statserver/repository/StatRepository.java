@@ -2,8 +2,8 @@ package ru.practicum.statserver.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.statserver.model.StatModel;
-import ru.practicum.statserver.statdto.StatDto;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -11,7 +11,7 @@ import java.util.Collection;
 public interface StatRepository extends JpaRepository<StatModel, Long> {
 
     @Query("""
-            SELECT new ru.practicum.statserver.statdto.StatDto(
+            SELECT new ru.practicum.dto.ViewStatsDto(
                 s.app,
                 s.uri,
                CASE WHEN :unique = TRUE
@@ -24,10 +24,10 @@ public interface StatRepository extends JpaRepository<StatModel, Long> {
             GROUP BY s.app, s.uri
             ORDER BY 3 DESC
             """)
-    Collection<StatDto> getStatWithoutUris(LocalDateTime start, LocalDateTime end, Boolean unique);
+    Collection<ViewStatsDto> getStatWithoutUris(LocalDateTime start, LocalDateTime end, Boolean unique);
 
     @Query("""
-            SELECT new ru.practicum.statserver.statdto.StatDto(
+            SELECT new ru.practicum.dto.ViewStatsDto(
                 s.app,
                 s.uri,
                CASE WHEN :unique = TRUE
@@ -41,6 +41,6 @@ public interface StatRepository extends JpaRepository<StatModel, Long> {
             GROUP BY s.app, s.uri
             ORDER BY 3 DESC
             """)
-    Collection<StatDto> getStat(LocalDateTime start, LocalDateTime end,
-                                Collection<String> uris, Boolean unique);
+    Collection<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
+                                     Collection<String> uris, Boolean unique);
 }
