@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ResponseDto;
 import ru.practicum.dto.ViewStatsDto;
-import ru.practicum.statserver.exception.IllegalArgumentException;
+import ru.practicum.statserver.exception.BadRequestException;
 import ru.practicum.statserver.server.StatService;
 
 import java.time.LocalDateTime;
@@ -46,7 +46,7 @@ public class StatController {
         log.info("Запрос статистики: start={}, end={}, uris={}, unique={}",
                 start, end, uris, unique);
         if (!end.isAfter(start)) {
-            throw new IllegalArgumentException("Start не может быть позже End.");
+            throw new BadRequestException("Start не может быть позже End.");
         }
         return statService.getStat(start, end, uris, unique);
     }
