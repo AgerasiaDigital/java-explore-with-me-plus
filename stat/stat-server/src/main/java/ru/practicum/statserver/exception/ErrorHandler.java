@@ -16,8 +16,8 @@ public class ErrorHandler {
             LoggerFactory.getLogger(ErrorHandler.class);
 
 
-    @ExceptionHandler(ru.practicum.statserver.exception.IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex,
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(BadRequestException ex,
                                                                         HttpServletRequest request) {
         log.error(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
