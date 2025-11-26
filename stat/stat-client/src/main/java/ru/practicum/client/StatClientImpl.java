@@ -22,20 +22,20 @@ import java.util.List;
 @Component
 public class StatClientImpl implements StatClient {
     private final RestClient restClient;
-    private final String statUrl;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     public StatClientImpl(@Value("${stat-service.url:http://localhost:9090}") String statUrl) {
-        this.statUrl = statUrl;
-        restClient = RestClient.builder().baseUrl(statUrl).build();
+        restClient = RestClient.builder()
+                .baseUrl(statUrl)
+                .build();
     }
 
     // TODO: обработка ошибок
     @Override
     public void hit(EndpointHitDto endpointHitDto) {
         restClient.post()
-                .uri(URI.create(statUrl + "/hit"))
+                .uri(URI.create("/hit"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(endpointHitDto)
                 .retrieve()
@@ -49,7 +49,7 @@ public class StatClientImpl implements StatClient {
     public List<ViewStatsDto> getStats(StatsParamDto statsParamDto) {
         ResponseEntity<List<ViewStatsDto>> response = restClient.get()
                 .uri(uriBuilder -> {
-                    uriBuilder.path(statUrl + "/stats")
+                    uriBuilder.path("/stats")
                             .queryParam("start", statsParamDto.getStart().format(formatter))
                             .queryParam("end", statsParamDto.getEnd().format(formatter));
 
