@@ -11,8 +11,8 @@ import ru.practicum.ewm.model.user.User;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "events")
+/*@Entity
+@Table(name = "events")*/
 @Getter
 @Setter
 @ToString
