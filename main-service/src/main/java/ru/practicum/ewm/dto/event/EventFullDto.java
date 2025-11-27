@@ -1,11 +1,11 @@
-package ru.practicum.dto.event;
+package ru.practicum.ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import ru.practicum.dto.category.CategoryDto;
-import ru.practicum.dto.user.UserShortDto;
+import ru.practicum.ewm.dto.category.CategoryDto;
+import ru.practicum.ewm.dto.user.UserShortDto;
 
 @Data
 public class EventFullDto {

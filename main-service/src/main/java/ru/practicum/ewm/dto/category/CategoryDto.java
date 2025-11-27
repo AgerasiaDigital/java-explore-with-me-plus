@@ -1,4 +1,4 @@
-package ru.practicum.dto.category;
+package ru.practicum.ewm.dto.category;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;

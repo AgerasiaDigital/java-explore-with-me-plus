@@ -1,8 +1,8 @@
-package ru.practicum.dto.compilation;
+package ru.practicum.ewm.dto.compilation;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import ru.practicum.dto.event.EventShortDto;
+import ru.practicum.ewm.dto.event.EventShortDto;
 
 import java.util.Set;
 
