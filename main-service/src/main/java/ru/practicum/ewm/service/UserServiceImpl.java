@@ -50,6 +50,7 @@ public class UserServiceImpl implements UserService {
     public UserDto create(NewUserRequest request) {
         log.debug("New user request: {}", request);
 
+        // TODO: можно заменить на попытку записи и отлов DataIntegrityViolationException
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             log.warn("User with email = {} already exists", request.getEmail());
             throw new ConflictException(String.format("User with email = %s already exists", request.getEmail()));

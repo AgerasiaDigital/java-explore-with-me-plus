@@ -29,6 +29,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto create(NewCategoryDto request) {
         log.debug("New category request: {}", request);
 
+        // TODO: можно заменить на попытку записи и отлов DataIntegrityViolationException
         if (categoryRepository.findByName(request.getName()).isPresent()) {
             log.warn("Category with name = {} already exists", request.getName());
             throw new ConflictException(String.format("Category with name = %s already exists", request.getName()));
@@ -65,6 +66,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new NotFoundException(String.format("Category with id = %d not found", categoryId));
         }
 
+        // TODO: можно заменить на попытку записи и отлов DataIntegrityViolationException
         if (categoryRepository.findByName(request.getName()).isPresent()) {
             log.warn("Category with name = {} already exists", request.getName());
             throw new ConflictException(String.format("Category with name = %s already exists", request.getName()));
