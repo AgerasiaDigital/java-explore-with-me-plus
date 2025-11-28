@@ -9,8 +9,8 @@ import ru.practicum.ewm.model.event.Event;
 
 import java.util.Set;
 
-@Entity
-@Table(name = "compilations")
+/*@Entity
+@Table(name = "compilations")*/
 @Getter
 @Setter
 @ToString

@@ -5,14 +5,14 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import ru.practicum.dto.event.Location;
+import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.user.User;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "events")
+/*@Entity
+@Table(name = "events")*/
 @Getter
 @Setter
 @ToString

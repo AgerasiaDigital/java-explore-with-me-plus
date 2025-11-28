@@ -9,8 +9,8 @@ import ru.practicum.ewm.model.user.User;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "requests")
+/*@Entity
+@Table(name = "requests")*/
 @Getter
 @Setter
 @ToString

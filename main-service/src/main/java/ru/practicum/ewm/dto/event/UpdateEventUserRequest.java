@@ -1,12 +1,10 @@
-package ru.practicum.dto.event;
+package ru.practicum.ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
-@Data
-public class UpdateEventAdminRequest { // TODO: patch-поведение
+public class UpdateEventUserRequest { // TODO: patch-поведение
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
     @Size(max = 2000)
@@ -30,7 +28,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private String stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
+    private String stateAction; // TODO: enum [ SEND_TO_REVIEW, CANCEL_REVIEW ]
 
     @Size(min = 3)
     @Size(max = 120)
