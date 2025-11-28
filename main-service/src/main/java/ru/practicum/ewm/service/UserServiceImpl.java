@@ -10,7 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.user.NewUserRequest;
 import ru.practicum.ewm.dto.user.UserDto;
 import ru.practicum.ewm.dto.user.UserParam;
-import ru.practicum.ewm.exception.EmailConflictException;
+import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.UserMapper;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.UserRepository;
@@ -51,7 +52,7 @@ public class UserServiceImpl implements UserService {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             log.warn("User with email = {} already exists", request.getEmail());
-            throw new EmailConflictException(String.format("User with email = %s already exists", request.getEmail()));
+            throw new ConflictException(String.format("User with email = %s already exists", request.getEmail()));
         }
 
         User user = userRepository.save(UserMapper.toNewUser(request));
@@ -63,6 +64,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteById(Long userId) {
         log.debug("User delete request with id = {}", userId);
+
+        if (!userRepository.existsById(userId)) {
+            log.warn("User with id = {} not found", userId);
+            throw new NotFoundException(String.format("User with id = %d not found", userId));
+        }
+
         userRepository.deleteById(userId);
         log.info("User with id = {} has been deleted", userId);
     }
