@@ -8,10 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.model.user.User;
-
 import java.util.Collection;
-import java.util.NoSuchElementException;
 
 @Slf4j
 @AllArgsConstructor
@@ -23,11 +20,11 @@ public class EventController {
     // Создание события пользователем
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
-    public void create(@PathVariable Long userId,
+    public EventFullDto create(@PathVariable Long userId,
                                @Valid @RequestBody NewEventDto newEventDto) {
         log.info("Запрос на создание события, userId={}", userId);
         log.debug("newEventDto: {}", newEventDto);
-        eventService.create(userId, newEventDto);
+        return eventService.create(userId, newEventDto);
     }
 
     @GetMapping("/users/{userId}/events")

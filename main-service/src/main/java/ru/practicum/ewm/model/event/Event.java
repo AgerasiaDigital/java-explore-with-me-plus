@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.user.User;
+
 import java.time.LocalDateTime;
 
 @Entity

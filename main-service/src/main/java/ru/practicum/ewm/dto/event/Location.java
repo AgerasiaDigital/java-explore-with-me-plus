@@ -2,7 +2,6 @@ package ru.practicum.ewm.dto.event;
 
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
 
 @Embeddable
 public class Location {
