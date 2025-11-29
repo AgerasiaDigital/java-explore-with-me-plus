@@ -5,14 +5,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.user.User;
-
 import java.time.LocalDateTime;
 
-/*@Entity
-@Table(name = "events")*/
+@Entity
+@Table(name = "events")
 @Getter
 @Setter
 @ToString
@@ -45,6 +43,7 @@ public class Event {
     private User initiator;
 
     // тут пока хз, нужно что-то типа @Embedded, т.к. это связанная сущность, не имеющая смысла без Event
+    @Embedded
     private Location location;
 
     @Column(name = "paid")
