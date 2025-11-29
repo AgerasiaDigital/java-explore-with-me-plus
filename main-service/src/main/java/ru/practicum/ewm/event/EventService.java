@@ -54,9 +54,10 @@ public class EventService {
 
     //TODO добавить категории
     //TODO добавить обработку валидации
+    //TODO после заливки пр по категориям заменить NoSuchElementException тут и далее на кастомный NotFoundException
     @Transactional
     public EventFullDto create(Long userId, NewEventDto newEventDto) {
-        User user = userRepository.getUserById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
         if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Дата события должна быть минимум через 2 часа");
@@ -66,7 +67,7 @@ public class EventService {
     }
 
     public Collection<EventShortDto> getEvent(Long userId) {
-        User user = userRepository.getUserById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
         Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
         List<EventShortDto> eventFullDtoList = new ArrayList<>();
