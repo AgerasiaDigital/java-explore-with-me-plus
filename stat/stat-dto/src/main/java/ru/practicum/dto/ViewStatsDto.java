@@ -13,4 +13,9 @@ public class ViewStatsDto {
     private String app;
     private String uri;
     private Long hits;
+
+    public Long getHits() {
+        return hits != null ? hits : 0L;
+    }
+
 }
