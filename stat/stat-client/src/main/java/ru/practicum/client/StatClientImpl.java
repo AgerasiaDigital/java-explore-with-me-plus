@@ -1,7 +1,6 @@
 package ru.practicum.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,6 @@ public class StatClientImpl implements StatClient {
     private final RestClient restClient;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Autowired
     public StatClientImpl(String statUrl) {
         restClient = RestClient.builder()
                 .baseUrl(statUrl)
