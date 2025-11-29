@@ -5,11 +5,12 @@ import ru.practicum.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 public interface StatService {
 
     void create(EndpointHitDto endpointHitDto);
 
-    Collection<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
-                                     Collection<String> uris, Boolean unique);
+    List<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
+                               Collection<String> uris, Boolean unique);
 }

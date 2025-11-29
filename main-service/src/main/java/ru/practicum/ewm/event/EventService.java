@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.client.StatClientImpl;
+import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
+import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.model.event.Event;
@@ -26,12 +27,13 @@ public class EventService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
-    private final StatClientImpl statClient;
+    private final StatClient statClient;
 
     private Long getViews(Long eventId) {
         StatsParamDto statsParamDto = new StatsParamDto();
         statsParamDto.setStart(LocalDateTime.now().minusYears(10));
         statsParamDto.setEnd(LocalDateTime.now().plusYears(10));
+
         statsParamDto.setUris(List.of("/events/" + eventId));
         List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
         Long hits = 0L;
@@ -44,12 +46,19 @@ public class EventService {
         return hits;
     }
 
+    //Заглушка. Заменить на выборку
+    private Long getRequests(Long eventId) {
+        return 10L;
+    }
+
+    //TODO добавить категории
+    //TODO добавить обработку валидации
     @Transactional
-    public void create(Long userId, NewEventDto newEventDto) {
+    public EventFullDto create(Long userId, NewEventDto newEventDto) {
         User user = userRepository.getUserById(userId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
-        Event newEvent = eventMapper.toEvent(newEventDto, user);
-        eventRepository.save(newEvent);
+        Event savedEvent = eventRepository.save(eventMapper.toEvent(newEventDto, user));
+        return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(savedEvent.getId()));
     }
 
     public Collection<EventShortDto> getEvent(Long userId) {
@@ -58,7 +67,7 @@ public class EventService {
         Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
         List<EventShortDto> eventFullDtoList = new ArrayList<>();
         for (Event e : events) {
-            Long request = 0L;
+            Long request = getRequests(e.getId());
             Long views = getViews(e.getId());
             eventFullDtoList.add(eventMapper.toShortDto(e, request, views));
         }

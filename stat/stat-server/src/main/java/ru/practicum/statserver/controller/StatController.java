@@ -13,7 +13,6 @@ import ru.practicum.statserver.exception.BadRequestException;
 import ru.practicum.statserver.server.StatService;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 @Slf4j
@@ -33,7 +32,7 @@ public class StatController {
     }
 
     @GetMapping("/stats")
-    public Collection<ViewStatsDto> getStat(@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    public List<ViewStatsDto> getStat(@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                                             @RequestParam(name = "start")
                                             LocalDateTime start,
                                             @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")

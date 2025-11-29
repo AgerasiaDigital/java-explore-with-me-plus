@@ -7,6 +7,7 @@ import ru.practicum.statserver.model.StatModel;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 public interface StatRepository extends JpaRepository<StatModel, Long> {
 
@@ -24,7 +25,7 @@ public interface StatRepository extends JpaRepository<StatModel, Long> {
             GROUP BY s.app, s.uri
             ORDER BY 3 DESC
             """)
-    Collection<ViewStatsDto> getStatWithoutUris(LocalDateTime start, LocalDateTime end, Boolean unique);
+    List<ViewStatsDto> getStatWithoutUris(LocalDateTime start, LocalDateTime end, Boolean unique);
 
     @Query("""
             SELECT new ru.practicum.dto.ViewStatsDto(
@@ -41,6 +42,6 @@ public interface StatRepository extends JpaRepository<StatModel, Long> {
             GROUP BY s.app, s.uri
             ORDER BY 3 DESC
             """)
-    Collection<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
+    List<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
                                      Collection<String> uris, Boolean unique);
 }
