@@ -10,6 +10,7 @@ import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.UserRepository;
@@ -57,6 +58,9 @@ public class EventService {
     public EventFullDto create(Long userId, NewEventDto newEventDto) {
         User user = userRepository.getUserById(userId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+        if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new ValidationException("Дата события должна быть минимум через 2 часа");
+        }
         Event savedEvent = eventRepository.save(eventMapper.toEvent(newEventDto, user));
         return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(savedEvent.getId()));
     }
