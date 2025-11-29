@@ -37,7 +37,6 @@ public class StatClientImpl implements StatClient {
                 .body(endpointHitDto)
                 .retrieve()
                 .toBodilessEntity();
-
         log.debug("hit: {}", endpointHitDto);
     }
 
