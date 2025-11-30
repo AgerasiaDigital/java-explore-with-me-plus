@@ -43,5 +43,5 @@ public interface StatRepository extends JpaRepository<StatModel, Long> {
             ORDER BY 3 DESC
             """)
     List<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
-                                     Collection<String> uris, Boolean unique);
+                               Collection<String> uris, Boolean unique);
 }
