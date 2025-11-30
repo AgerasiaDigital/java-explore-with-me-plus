@@ -1,16 +1,12 @@
 package ru.practicum.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
-import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 
 import java.net.URI;
@@ -24,8 +20,7 @@ public class StatClientImpl implements StatClient {
     private final RestClient restClient;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Autowired
-    public StatClientImpl(@Value("${stat-service.url:http://localhost:9090}") String statUrl) {
+    public StatClientImpl(String statUrl) {
         restClient = RestClient.builder()
                 .baseUrl(statUrl)
                 .build();
@@ -40,14 +35,15 @@ public class StatClientImpl implements StatClient {
                 .body(endpointHitDto)
                 .retrieve()
                 .toBodilessEntity();
-
         log.debug("hit: {}", endpointHitDto);
     }
 
     // TODO: обработка ошибок
     @Override
     public List<ViewStatsDto> getStats(StatsParamDto statsParamDto) {
-        ResponseEntity<List<ViewStatsDto>> response = restClient.get()
+        log.info("Запрос стастистики для uri: {}", statsParamDto.getUris());
+        log.debug("statsParamDto: {}", statsParamDto);
+        List<ViewStatsDto> stats = restClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder.path("/stats")
                             .queryParam("start", statsParamDto.getStart().format(formatter))
@@ -64,17 +60,13 @@ public class StatClientImpl implements StatClient {
                     return uriBuilder.build();
                 })
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
-
-        List<ViewStatsDto> stats;
-
-        if (response == null) {
-            log.warn("no stats for: {}", statsParamDto);
-            stats = Collections.emptyList();
-        } else {
-            stats = response.getBody();
+                .body(new ParameterizedTypeReference<>() {
+                });
+        if (stats == null) {
+            log.warn("Отсутствует статистика посещений для: {}", statsParamDto);
+            return Collections.emptyList();
         }
-
+        log.debug("Выгружена статистика: {}", stats);
         return stats;
     }
 }
