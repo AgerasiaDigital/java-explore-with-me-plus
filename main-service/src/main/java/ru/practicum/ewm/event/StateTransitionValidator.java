@@ -12,6 +12,8 @@ public final class StateTransitionValidator {
     public static void validate(Event event, StateAction action) {
         EventState current = event.getState();
 
+
+
         switch (action) {
             case SEND_TO_REVIEW:
                 // нельзя отправлять в ревью, если уже опубликовано
