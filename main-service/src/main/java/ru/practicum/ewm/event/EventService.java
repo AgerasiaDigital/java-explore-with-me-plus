@@ -7,19 +7,17 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
-import ru.practicum.ewm.dto.event.EventFullDto;
-import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.exception.AccessViolationException;
 import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @Slf4j
 @AllArgsConstructor
@@ -78,4 +76,53 @@ public class EventService {
         }
         return eventFullDtoList;
     }
+
+    public EventFullDto getEventFullDescription(Long userId, Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+        if (!Objects.equals(event.getInitiator().getId(), userId)) {
+            throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
+                    "eventId=%s", userId, eventId));
+        }
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
+    }
+
+//    private void applyStateTransition(Event event, StateAction action) {
+//        StateTransitionValidator.validate(event, action);
+//        event.setState(action.toEventState());
+//        if (action == StateAction.PUBLISH_EVENT) {
+//            event.setPublishedOn(java.time.LocalDateTime.now());
+//        }
+//    }
+
+    @Transactional
+    public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+        if (!Objects.equals(event.getInitiator().getId(), userId)) {
+            throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
+                    "eventId=%s", userId, eventId));
+        }
+
+        Category category = null;
+//        if (updateEventUserRequest.hasCategory()) {
+//            category = categoryRepository.findById(updateEventUserRequest.getCategory())
+//                    .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
+//        }
+
+        Location newLocation = null;
+        if (updateEventUserRequest.hasLocation()) {
+            newLocation = updateEventUserRequest.getLocationDto();
+        }
+
+        updateEventUserRequest.applyTo(event, category, newLocation);
+        eventRepository.save(event);
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
+    }
+
+
 }

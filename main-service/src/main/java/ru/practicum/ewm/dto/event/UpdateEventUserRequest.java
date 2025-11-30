@@ -1,9 +1,15 @@
 package ru.practicum.ewm.dto.event;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import ru.practicum.ewm.model.category.Category;
+import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.Location;
 
+@Getter
+@Setter
 public class UpdateEventUserRequest { // TODO: patch-поведение
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
@@ -20,7 +26,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    private Location location;
+    private Location locationDto;
 
     private Boolean paid;
 
@@ -28,7 +34,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private String stateAction; // TODO: enum [ SEND_TO_REVIEW, CANCEL_REVIEW ]
+    private StateAction stateAction;
 
     @Size(min = 3)
     @Size(max = 120)
@@ -48,7 +54,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
     }
 
     public boolean hasLocation() {
-        return location != null;
+        return locationDto != null;
     }
 
     public boolean hasPaid() {
@@ -70,4 +76,43 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
     public boolean hasTitle() {
         return title != null;
     }
+
+    public void applyTo(Event event, Category category, Location location) {
+        if (hasTitle()) {
+            event.setTitle(title);
+        }
+
+        if (hasAnnotation()) {
+            event.setAnnotation(annotation);
+        }
+
+        if (hasDescription()) {
+            event.setDescription(description);
+        }
+
+        if (hasCategory()) {
+            event.setCategory(category);
+        }
+
+        if (hasLocation()) {
+            event.setLocation(location);
+        }
+
+        if (hasPaid()) {
+            event.setPaid(paid);
+        }
+
+        if (hasParticipantLimit()) {
+            event.setParticipantLimit(participantLimit);
+        }
+
+        if (hasRequestModeration()) {
+            event.setRequestModeration(requestModeration);
+        }
+
+        if (hasStateAction()) {
+            event.setState(stateAction.toEventState());
+        }
+    }
+
 }

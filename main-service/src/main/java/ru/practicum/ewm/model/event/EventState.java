@@ -13,7 +13,6 @@ public enum EventState {
                 return Optional.of(state);
             }
         }
-
         return Optional.empty();
     }
 }
