@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import ru.practicum.ewm.model.event.Location;
 
 @Data
 public class UpdateEventAdminRequest { // TODO: patch-поведение

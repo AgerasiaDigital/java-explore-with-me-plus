@@ -12,8 +12,10 @@ import ru.practicum.ewm.exception.AccessViolationException;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.user.User;
+import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -27,6 +29,7 @@ public class EventService {
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
     private final StatClient statClient;
+    private final CategoryRepository categoryRepository;
 
     private Long getViews(Long eventId) {
         StatsParamDto statsParamDto = new StatsParamDto();
@@ -101,24 +104,27 @@ public class EventService {
     public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
+        if (event.getState()!= EventState.PENDING && event.getState()!= EventState.CANCELED) {
+            throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
+        }
+        if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new ValidationException("Разрешается редактировать события не позже, чем за 2 час до начала");
+        }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
                     "eventId=%s", userId, eventId));
         }
-
         Category category = null;
-//        if (updateEventUserRequest.hasCategory()) {
-//            category = categoryRepository.findById(updateEventUserRequest.getCategory())
-//                    .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
-//        }
-
-        Location newLocation = null;
-        if (updateEventUserRequest.hasLocation()) {
-            newLocation = updateEventUserRequest.getLocationDto();
+        if (updateEventUserRequest.hasCategory()) {
+            category = categoryRepository.findById(updateEventUserRequest.getCategory())
+                    .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
         }
-
+        Location newLocation = null;
+        if (updateEventUserRequest.hasLocationDto()) {
+            newLocation = eventMapper.toLocation(updateEventUserRequest.getLocationDto());
+        }
         updateEventUserRequest.applyTo(event, category, newLocation);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
