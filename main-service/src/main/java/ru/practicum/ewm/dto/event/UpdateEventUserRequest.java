@@ -1,5 +1,7 @@
 package ru.practicum.ewm.dto.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -26,7 +28,9 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    private Location locationDto;
+    @Valid
+    @JsonProperty("location")
+    private LocationDto locationDto;
 
     private Boolean paid;
 
@@ -53,7 +57,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocation() {
+    public boolean hasLocationDto() {
         return locationDto != null;
     }
 
@@ -94,7 +98,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
             event.setCategory(category);
         }
 
-        if (hasLocation()) {
+        if (hasLocationDto()) {
             event.setLocation(location);
         }
 
