@@ -1,17 +1,16 @@
 package ru.practicum.ewm.dto.event;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
-import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
-import ru.practicum.ewm.model.event.StateAction;
 
-@Data
-public class UpdateEventRequest {
+@Getter
+@Setter
+public class UpdateEventUserRequest { // TODO: patch-поведение
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
     @Size(max = 2000)
@@ -78,7 +77,7 @@ public class UpdateEventRequest {
         return title != null;
     }
 
-    public void applyTo(Event event, Category category, Location location, EventState eventState) {
+    public void applyTo(Event event, Category category, Location location) {
         if (hasTitle()) {
             event.setTitle(title);
         }
@@ -112,7 +111,8 @@ public class UpdateEventRequest {
         }
 
         if (hasStateAction()) {
-            event.setState(eventState);
+            event.setState(stateAction.toEventState());
         }
     }
+
 }
