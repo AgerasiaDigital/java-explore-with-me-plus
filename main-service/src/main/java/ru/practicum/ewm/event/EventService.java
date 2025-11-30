@@ -29,7 +29,6 @@ public class EventService {
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
     private final StatClient statClient;
-    private final CategoryRepository categoryRepository;
 
     private Long getViews(Long eventId) {
         StatsParamDto statsParamDto = new StatsParamDto();

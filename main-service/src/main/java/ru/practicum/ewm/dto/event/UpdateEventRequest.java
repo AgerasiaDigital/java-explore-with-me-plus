@@ -57,7 +57,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocationDto() {
+    public boolean hasLocation() {
         return locationDto != null;
     }
 
@@ -98,7 +98,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
             event.setCategory(category);
         }
 
-        if (hasLocationDto()) {
+        if (hasLocation()) {
             event.setLocation(location);
         }
 
