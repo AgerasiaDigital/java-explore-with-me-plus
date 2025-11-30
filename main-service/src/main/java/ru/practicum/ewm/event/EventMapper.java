@@ -5,9 +5,11 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
+import ru.practicum.ewm.dto.event.LocationDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.user.User;
 
 
@@ -19,8 +21,7 @@ public interface EventMapper {
     @Mapping(target = "createdOn", ignore = true)
     @Mapping(target = "publishedOn", ignore = true)
     @Mapping(target = "state", ignore = true)
-    //@Mapping(target = "category", ignore =
-    @Mapping(target = "category", source = "categoryId", qualifiedByName = "categoryFromId")
+    @Mapping(target = "category", source = "newEventDto.category", qualifiedByName = "categoryFromId")
     Event toEvent(NewEventDto newEventDto, User user);
 
     @Named("categoryFromId")
@@ -40,5 +41,6 @@ public interface EventMapper {
     @Mapping(target = "location", source = "event.location")
     EventFullDto toFullDto(Event event, Long requests, Long views);
 
+    Location toLocation(LocationDto locationDto);
 }
 

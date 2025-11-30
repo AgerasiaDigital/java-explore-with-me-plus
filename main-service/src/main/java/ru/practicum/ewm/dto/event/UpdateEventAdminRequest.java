@@ -1,18 +1,13 @@
 package ru.practicum.ewm.dto.event;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
-import ru.practicum.ewm.model.category.Category;
-import ru.practicum.ewm.model.event.Event;
+import lombok.Data;
 import ru.practicum.ewm.model.event.Location;
 
-@Getter
-@Setter
-public class UpdateEventUserRequest { // TODO: patch-поведение
+@Data
+public class UpdateEventAdminRequest { // TODO: patch-поведение
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
     @Size(max = 2000)
@@ -28,9 +23,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    @Valid
-    @JsonProperty("location")
-    private LocationDto locationDto;
+    private Location location;
 
     private Boolean paid;
 
@@ -38,7 +31,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private StateAction stateAction;
+    private String stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
 
     @Size(min = 3)
     @Size(max = 120)
@@ -57,8 +50,8 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocationDto() {
-        return locationDto != null;
+    public boolean hasLocation() {
+        return location != null;
     }
 
     public boolean hasPaid() {
@@ -80,43 +73,4 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
     public boolean hasTitle() {
         return title != null;
     }
-
-    public void applyTo(Event event, Category category, Location location) {
-        if (hasTitle()) {
-            event.setTitle(title);
-        }
-
-        if (hasAnnotation()) {
-            event.setAnnotation(annotation);
-        }
-
-        if (hasDescription()) {
-            event.setDescription(description);
-        }
-
-        if (hasCategory()) {
-            event.setCategory(category);
-        }
-
-        if (hasLocationDto()) {
-            event.setLocation(location);
-        }
-
-        if (hasPaid()) {
-            event.setPaid(paid);
-        }
-
-        if (hasParticipantLimit()) {
-            event.setParticipantLimit(participantLimit);
-        }
-
-        if (hasRequestModeration()) {
-            event.setRequestModeration(requestModeration);
-        }
-
-        if (hasStateAction()) {
-            event.setState(stateAction.toEventState());
-        }
-    }
-
 }
