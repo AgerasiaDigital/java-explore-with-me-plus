@@ -33,15 +33,15 @@ public class StatController {
 
     @GetMapping("/stats")
     public List<ViewStatsDto> getStat(@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-                                            @RequestParam(name = "start")
-                                            LocalDateTime start,
-                                            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-                                            @RequestParam(name = "end")
-                                            LocalDateTime end,
-                                            @RequestParam(name = "uris", required = false)
-                                            List<String> uris,
-                                            @RequestParam(name = "unique", defaultValue = "false", required = false)
-                                            Boolean unique) {
+                                      @RequestParam(name = "start")
+                                      LocalDateTime start,
+                                      @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+                                      @RequestParam(name = "end")
+                                      LocalDateTime end,
+                                      @RequestParam(name = "uris", required = false)
+                                      List<String> uris,
+                                      @RequestParam(name = "unique", defaultValue = "false", required = false)
+                                      Boolean unique) {
         log.info("Запрос статистики: start={}, end={}, uris={}, unique={}",
                 start, end, uris, unique);
         if (!end.isAfter(start)) {
