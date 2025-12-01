@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
+import ru.practicum.ewm.dto.compilation.CompilationParam;
 import ru.practicum.ewm.service.CompilationService;
 
 import java.util.List;
@@ -20,10 +21,11 @@ public class CompilationController {
 
     @GetMapping
     public List<CompilationDto> getCompilations(@RequestParam(required = false) Boolean pinned,
-                                                @RequestParam(required = false, defaultValue = "0") @Positive int from,
-                                                @RequestParam(required = false, defaultValue = "10") @Positive int size) {
+                                                @RequestParam(required = false, defaultValue = "0") Integer from,
+                                                @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.debug("GET /compilations: pinned = {}, from = {}, size = {}", pinned, from, size);
-        return compilationService.getCompilations(pinned, from, size);
+        CompilationParam param = new CompilationParam(pinned, from, size);
+        return compilationService.getCompilations(param);
     }
 
     @GetMapping("/{compId}")

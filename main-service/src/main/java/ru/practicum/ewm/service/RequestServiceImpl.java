@@ -9,6 +9,7 @@ import ru.practicum.ewm.dto.event.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.dto.event.ParticipationRequestDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
@@ -71,7 +72,7 @@ public class RequestServiceImpl implements RequestService {
 
         if (event.getParticipantLimit() > 0) {
             Long confirmedCount = requestRepository.countConfirmedRequestsByEventId(eventId);
-            if (confirmedCount >= event.getParticipantLimit()) {
+            if (confirmedCount > event.getParticipantLimit()) {
                 throw new ConflictException("Participant limit reached");
             }
         }
@@ -159,7 +160,7 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequestDto> rejected = new ArrayList<>();
 
         RequestStatus newStatus = RequestStatus.from(updateRequest.getStatus())
-                .orElseThrow(() -> new ConflictException("Invalid status"));
+                .orElseThrow(() -> new ValidationException("Invalid status"));
 
         if (newStatus.equals(RequestStatus.CONFIRMED)) {
             if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {

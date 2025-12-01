@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
+import ru.practicum.ewm.dto.compilation.CompilationParam;
 import ru.practicum.ewm.dto.compilation.NewCompilationDto;
 import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.ewm.dto.event.EventShortDto;
@@ -87,15 +88,15 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CompilationDto> getCompilations(Boolean pinned, int from, int size) {
-        log.debug("Get compilations: pinned = {}, from = {}, size = {}", pinned, from, size);
+    public List<CompilationDto> getCompilations(CompilationParam param) {
+        log.debug("Get compilations: {}", param);
 
-        int page = from / size;
-        Pageable pageable = PageRequest.of(page, size);
+        int page = param.from() / param.size();
+        Pageable pageable = PageRequest.of(page, param.size());
 
         List<Compilation> compilations;
-        if (pinned != null) {
-            compilations = compilationRepository.findByPinned(pinned, pageable);
+        if (param.pinned() != null) {
+            compilations = compilationRepository.findByPinned(param.pinned(), pageable);
         } else {
             compilations = compilationRepository.findAll(pageable).getContent();
         }
@@ -125,9 +126,20 @@ public class CompilationServiceImpl implements CompilationService {
             return new HashSet<>();
         }
 
+        List<Long> eventIds = events.stream()
+                .map(Event::getId)
+                .toList();
+
+        Map<Long, Long> confirmedRequestsMap = requestRepository.countConfirmedRequestsByEventIds(eventIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        result -> (Long) result[0],
+                        result -> (Long) result[1]
+                ));
+
         return events.stream()
                 .map(event -> {
-                    Long confirmedRequests = requestRepository.countConfirmedRequestsByEventId(event.getId());
+                    Long confirmedRequests = confirmedRequestsMap.getOrDefault(event.getId(), 0L);
                     Long views = 0L;
                     return eventMapper.toShortDto(event, confirmedRequests, views);
                 })
