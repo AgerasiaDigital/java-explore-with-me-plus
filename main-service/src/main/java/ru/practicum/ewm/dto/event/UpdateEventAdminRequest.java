@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import ru.practicum.ewm.dto.user.Role;
-import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
+import ru.practicum.ewm.model.event.StateAction;
 
 @Data
 public class UpdateEventAdminRequest { // TODO: patch-поведение
@@ -78,15 +78,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
         return title != null;
     }
 
-    private void validateAction(StateAction action, Role role) {
-        if (action.getAllowedRole() != role) {
-            throw new ValidationException(
-                    "Role " + role + " cannot perform action " + action
-            );
-        }
-    }
-
-    public void applyTo(Event event, Category category, Location location,  Role role) {
+    public void applyTo(Event event, Category category, Location location, EventState eventState) {
         if (hasTitle()) {
             event.setTitle(title);
         }
@@ -120,8 +112,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
         }
 
         if (hasStateAction()) {
-            event.setState(stateAction.toEventState());
-        }
+            event.setState(eventState);
         }
     }
 }
