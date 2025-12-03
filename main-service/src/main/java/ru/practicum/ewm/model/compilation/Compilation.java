@@ -1,9 +1,6 @@
 package ru.practicum.ewm.model.compilation;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,8 +9,8 @@ import ru.practicum.ewm.model.event.Event;
 
 import java.util.Set;
 
-/*@Entity
-@Table(name = "compilations")*/
+@Entity
+@Table(name = "compilations")
 @Getter
 @Setter
 @ToString
@@ -23,12 +20,18 @@ public class Compilation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO: ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "compilation_events",
+            joinColumns = @JoinColumn(name = "compilation_id"),
+            inverseJoinColumns = @JoinColumn(name = "event_id")
+    )
+    @ToString.Exclude
     private Set<Event> events;
 
-    @Column(name = "pinned")
+    @Column(name = "pinned", nullable = false)
     private Boolean pinned;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false, length = 50)
     private String title;
 }
