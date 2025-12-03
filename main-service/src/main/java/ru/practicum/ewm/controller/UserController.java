@@ -24,8 +24,8 @@ public class UserController {
 
     @GetMapping
     public List<UserDto> get(@RequestParam(required = false) List<Long> ids,
-                             @RequestParam(required = false, defaultValue = "0") @Positive Integer from,
-                             @RequestParam(required = false, defaultValue = "10") @Positive Integer size) {
+                             @RequestParam(required = false, defaultValue = "0") Integer from,
+                             @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.debug("GET /admin/users: ids = {}, from = {}, size = {}", ids, from, size);
 
         UserParam userParam = new UserParam(ids, from, size);
