@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import ru.practicum.ewm.dto.user.Role;
+import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.model.category.Category;
+import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.Location;
 
 @Data
@@ -23,7 +27,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    private Location location;
+    private LocationDto locationDto;
 
     private Boolean paid;
 
@@ -31,7 +35,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private String stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
+    private StateAction stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
 
     @Size(min = 3)
     @Size(max = 120)
@@ -50,8 +54,8 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocation() {
-        return location != null;
+    public boolean hasLocationDto() {
+        return locationDto != null;
     }
 
     public boolean hasPaid() {
@@ -72,5 +76,52 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
     public boolean hasTitle() {
         return title != null;
+    }
+
+    private void validateAction(StateAction action, Role role) {
+        if (action.getAllowedRole() != role) {
+            throw new ValidationException(
+                    "Role " + role + " cannot perform action " + action
+            );
+        }
+    }
+
+    public void applyTo(Event event, Category category, Location location,  Role role) {
+        if (hasTitle()) {
+            event.setTitle(title);
+        }
+
+        if (hasAnnotation()) {
+            event.setAnnotation(annotation);
+        }
+
+        if (hasDescription()) {
+            event.setDescription(description);
+        }
+
+        if (hasCategory()) {
+            event.setCategory(category);
+        }
+
+        if (hasLocationDto()) {
+            event.setLocation(location);
+        }
+
+        if (hasPaid()) {
+            event.setPaid(paid);
+        }
+
+        if (hasParticipantLimit()) {
+            event.setParticipantLimit(participantLimit);
+        }
+
+        if (hasRequestModeration()) {
+            event.setRequestModeration(requestModeration);
+        }
+
+        if (hasStateAction()) {
+            event.setState(stateAction.toEventState());
+        }
+        }
     }
 }
