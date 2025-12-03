@@ -1,4 +1,5 @@
 package ru.practicum.ewm.dto.event;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

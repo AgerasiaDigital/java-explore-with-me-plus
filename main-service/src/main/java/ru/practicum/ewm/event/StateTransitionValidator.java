@@ -7,9 +7,10 @@ import ru.practicum.ewm.model.event.EventState;
 
 public final class StateTransitionValidator {
 
-    private StateTransitionValidator() {}
+    private StateTransitionValidator() {
+    }
 
-    public static void validate(Event event, StateAction action) {
+    public static void changeState(Event event, StateAction action) {
         EventState current = event.getState();
 
 
