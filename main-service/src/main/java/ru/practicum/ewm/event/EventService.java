@@ -1,7 +1,11 @@
 package ru.practicum.ewm.event;
 
+import com.querydsl.core.BooleanBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatClient;
@@ -34,7 +38,6 @@ public class EventService {
     private final EventMapper eventMapper;
     private final StatClient statClient;
     private final CategoryRepository categoryRepository;
-    private final StateTransitionValidator stateTransitionValidator;
 
     //TODO убрать костыль указания временного диапазона
     private Long getViews(Long eventId) {
@@ -53,7 +56,6 @@ public class EventService {
         return hits;
     }
 
-    //Заглушка. Заменить на выборку
     private Long getRequests(Long eventId) {
         return 10L;
     }
@@ -116,10 +118,10 @@ public class EventService {
     public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
-        if (event.getState()!= EventState.PENDING && event.getState()!= EventState.CANCELED) {
+        if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
             throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
-        if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+        if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 2 час до начала");
         }
         User user = userRepository.findById(userId)
@@ -129,27 +131,22 @@ public class EventService {
                     "eventId=%s", userId, eventId));
         }
 
-        if (updateEventUserRequest.getStateAction() != null) {
-            StateAction action = updateEventUserRequest.getStateAction();
-
-            // проверяем права
-            validateAction(action, Role.USER);
-
-            // применяем
-          //  StateTransitionValidator.changeState(event, action);
-            updateEventUserRequest.setState(action.toEventState());
-        }
+        // Проверка перехода статуса ---
+        EventState newState =
+                StateTransitionValidator.changeState(event.getState(), updateEventUserRequest.getStateAction(), false);
 
         Category category = null;
         if (updateEventUserRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventUserRequest.getCategory())
                     .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
         }
+
         Location newLocation = null;
         if (updateEventUserRequest.hasLocationDto()) {
             newLocation = eventMapper.toLocation(updateEventUserRequest.getLocationDto());
         }
-        updateEventUserRequest.applyTo(event, category, newLocation);
+
+        updateEventUserRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
@@ -162,19 +159,25 @@ public class EventService {
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
             throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
-        if (LocalDateTime.now().plusHours(1).isBefore(event.getEventDate())) {
+        if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(1))) {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 1 час до начала");
         }
+
+        EventState newState =
+                StateTransitionValidator.changeState(event.getState(), updateEventAdminRequest.getStateAction(), true);
+
         Category category = null;
         if (updateEventAdminRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventAdminRequest.getCategory())
                     .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
         }
+
         Location newLocation = null;
         if (updateEventAdminRequest.hasLocationDto()) {
             newLocation = eventMapper.toLocation(updateEventAdminRequest.getLocationDto());
         }
-        updateEventAdminRequest.applyTo(event, category, newLocation);
+
+        updateEventAdminRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
