@@ -1,13 +1,24 @@
 package ru.practicum.ewm.dto.event;
 
+import ru.practicum.ewm.dto.user.Role;
 import ru.practicum.ewm.model.event.EventState;
 
 public enum StateAction {
-    SEND_TO_REVIEW,   // пользователь отправляет на модерацию (оставляет PENDING)
-    CANCEL_REVIEW,    // пользователь отменяет (переводит в CANCELED)
+    SEND_TO_REVIEW(Role.USER),
+    CANCEL_REVIEW(Role.USER),
 
-    PUBLISH_EVENT,    // админ публикует (PUBLISHED)
-    REJECT_EVENT;     // админ отклоняет (CANCELED или отдельный REJECTED)
+    PUBLISH_EVENT(Role.ADMIN),
+    REJECT_EVENT(Role.ADMIN);
+
+    private final Role allowedRole;
+
+    StateAction(Role allowedRole) {
+        this.allowedRole = allowedRole;
+    }
+
+    public Role getAllowedRole() {
+        return allowedRole;
+    }
 
     public EventState toEventState() {
         return switch (this) {
