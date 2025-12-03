@@ -62,7 +62,7 @@ public class EventController {
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
                                            @Valid @RequestBody UpdateEventAdminRequest updateEventAdminRequest) {
         log.info("Запрос на редактирование события админом, eventId={}", eventId);
-        EventFullDto eventFullDto = eventService.updateEventByCreator(eventId, updateEventAdminRequest);
+        EventFullDto eventFullDto = eventService.updateEventByAdmin(eventId, updateEventAdminRequest);
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
     }
