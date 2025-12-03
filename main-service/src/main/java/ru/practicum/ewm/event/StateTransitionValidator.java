@@ -1,52 +1,41 @@
 package ru.practicum.ewm.event;
 
-import ru.practicum.ewm.dto.event.StateAction;
-import ru.practicum.ewm.exception.ForbiddenStateChangeException;
-import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
+import ru.practicum.ewm.model.event.StateAction;
 
-public final class StateTransitionValidator {
+public class StateTransitionValidator {
 
-    private StateTransitionValidator() {
-    }
-
-    public static void changeState(Event event, StateAction action) {
-        EventState current = event.getState();
+    public static EventState changeState(EventState current, StateAction action, boolean isAdmin) {
 
 
 
         switch (action) {
+
             case SEND_TO_REVIEW:
-                // нельзя отправлять в ревью, если уже опубликовано
-                if (current == EventState.PUBLISHED) {
-                    throw new ForbiddenStateChangeException("Нельзя отправить на модерацию уже опубликованное событие");
-                }
-                // в остальных случаях допустимо (например, PENDING или CANCELED -> можно попытаться отправить)
-                return;
+                if (current == EventState.CANCELED || current == EventState.PENDING)
+                    return EventState.PENDING;
+                throw new IllegalStateException("Нельзя отправить в ревью из состояния " + current);
 
             case CANCEL_REVIEW:
-                // отменить можно только если сейчас PENDING (в ожидании)
-                if (current != EventState.PENDING) {
-                    throw new ForbiddenStateChangeException("Отменить можно только событие в ожидании публикации (PENDING)");
-                }
-                return;
+                if (current == EventState.PENDING)
+                    return EventState.CANCELED;
+                throw new IllegalStateException("Отмена допустима только из PENDING");
 
             case PUBLISH_EVENT:
-                // публиковать можно только из PENDING
-                if (current != EventState.PENDING) {
-                    throw new ForbiddenStateChangeException("Публиковать можно только событие в статусе PENDING");
-                }
-                return;
+                if (!isAdmin)
+                    throw new SecurityException("Публиковать может только администратор");
+                if (current == EventState.PENDING)
+                    return EventState.PUBLISHED;
+                throw new IllegalStateException("Публиковать можно только PENDING");
 
             case REJECT_EVENT:
-                // отклонять можно только из PENDING
-                if (current != EventState.PENDING) {
-                    throw new ForbiddenStateChangeException("Отклонить можно только событие в статусе PENDING");
-                }
-                return;
-
-            default:
-                throw new ForbiddenStateChangeException("Неизвестное действие: " + action);
+                if (!isAdmin)
+                    throw new SecurityException("Отклонять может только администратор");
+                if (current == EventState.PENDING)
+                    return EventState.CANCELED;
+                throw new IllegalStateException("Отклонять можно только PENDING");
         }
+
+        throw new IllegalArgumentException("Неизвестное действие");
     }
 }

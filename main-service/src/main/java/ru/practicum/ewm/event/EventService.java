@@ -12,7 +12,6 @@ import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.dto.event.*;
-import ru.practicum.ewm.dto.user.Role;
 import ru.practicum.ewm.exception.AccessViolationException;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.model.category.Category;
@@ -38,7 +37,6 @@ public class EventService {
     private final EventMapper eventMapper;
     private final StatClient statClient;
     private final CategoryRepository categoryRepository;
-    private final StateTransitionValidator stateTransitionValidator;
 
     //TODO убрать костыль указания временного диапазона
     private Long getViews(Long eventId) {
@@ -100,19 +98,6 @@ public class EventService {
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
-//    private void applyStateTransition(Event event, StateAction action) {
-//        StateTransitionValidator.validate(event, action);
-//        event.setState(action.toEventState());
-//        if (action == StateAction.PUBLISH_EVENT) {
-//            event.setPublishedOn(java.time.LocalDateTime.now());
-//        }
-//    }
-
-    private void validateAction(StateAction action, Role role) {
-        if (action.getAllowedRole() != role) {
-            throw new ValidationException("Role " + role + " cannot perform " + action);
-        }
-    }
 
     //TODO вынести 2 часа - в настройки приложения
     @Transactional
@@ -122,7 +107,7 @@ public class EventService {
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
             throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
-        if (LocalDateTime.now().plusHours(2).isBefore(event.getEventDate())) {
+        if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 2 час до начала");
         }
         User user = userRepository.findById(userId)
@@ -132,27 +117,22 @@ public class EventService {
                     "eventId=%s", userId, eventId));
         }
 
-        if (updateEventUserRequest.getStateAction() != null) {
-            StateAction action = updateEventUserRequest.getStateAction();
-
-            // проверяем права
-            validateAction(action, Role.USER);
-
-            // применяем
-          //  StateTransitionValidator.changeState(event, action);
-            updateEventUserRequest.setState(action.toEventState());
-        }
+        // Проверка перехода статуса ---
+        EventState newState =
+                StateTransitionValidator.changeState(event.getState(), updateEventUserRequest.getStateAction(), false);
 
         Category category = null;
         if (updateEventUserRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventUserRequest.getCategory())
                     .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
         }
+
         Location newLocation = null;
         if (updateEventUserRequest.hasLocationDto()) {
             newLocation = eventMapper.toLocation(updateEventUserRequest.getLocationDto());
         }
-        updateEventUserRequest.applyTo(event, category, newLocation);
+
+        updateEventUserRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
@@ -165,19 +145,25 @@ public class EventService {
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
             throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
-        if (LocalDateTime.now().plusHours(1).isBefore(event.getEventDate())) {
+        if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(1))) {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 1 час до начала");
         }
+
+        EventState newState =
+                StateTransitionValidator.changeState(event.getState(), updateEventAdminRequest.getStateAction(), true);
+
         Category category = null;
         if (updateEventAdminRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventAdminRequest.getCategory())
                     .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
         }
+
         Location newLocation = null;
         if (updateEventAdminRequest.hasLocationDto()) {
             newLocation = eventMapper.toLocation(updateEventAdminRequest.getLocationDto());
         }
-        updateEventAdminRequest.applyTo(event, category, newLocation);
+
+        updateEventAdminRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }

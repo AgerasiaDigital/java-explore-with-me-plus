@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.Setter;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
+import ru.practicum.ewm.model.event.StateAction;
 
 @Getter
 @Setter
@@ -78,7 +80,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
         return title != null;
     }
 
-    public void applyTo(Event event, Category category, Location location) {
+    public void applyTo(Event event, Category category, Location location, EventState eventState) {
         if (hasTitle()) {
             event.setTitle(title);
         }
@@ -112,7 +114,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
         }
 
         if (hasStateAction()) {
-            event.setState(stateAction.toEventState());
+            event.setState(eventState);
         }
     }
 
