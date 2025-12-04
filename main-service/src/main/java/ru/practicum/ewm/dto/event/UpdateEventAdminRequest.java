@@ -1,6 +1,8 @@
 package ru.practicum.ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -27,6 +29,8 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
+    @Valid
+    @JsonProperty("location")
     private LocationDto locationDto;
 
     private Boolean paid;
