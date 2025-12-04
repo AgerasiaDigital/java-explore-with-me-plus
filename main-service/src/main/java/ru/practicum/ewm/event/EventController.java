@@ -14,8 +14,9 @@ import java.util.List;
 @AllArgsConstructor
 @RestController
 
+
 public class EventController {
-    EventService eventService;
+    private final EventService eventService;
 
     // Создание события пользователем
     @PostMapping("/users/{userId}/events")
@@ -58,7 +59,7 @@ public class EventController {
         return eventFullDto;
     }
 
-    @PatchMapping("/users/events/{eventId}")
+    @PatchMapping("/admin/events/{eventId}")
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
                                            @Valid @RequestBody UpdateEventAdminRequest updateEventAdminRequest) {
         log.info("Запрос на редактирование события админом, eventId={}", eventId);
@@ -66,6 +67,9 @@ public class EventController {
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
     }
+    // TODO Для лучшей читаемости можно сделать несколько контроллеров событий (по уровню доступа - admin, public и private)
+    //  и перенести туда обработку соответствующих эндпоинтов
+    // TODO Лучше всю портянку параметров вынести в класс, например, EventParam, и в сервис уже передавать объект этого класса
 
     @GetMapping("/admin/events")
     public List<EventFullDto> get(@RequestParam(required = false) List<Long> users,
