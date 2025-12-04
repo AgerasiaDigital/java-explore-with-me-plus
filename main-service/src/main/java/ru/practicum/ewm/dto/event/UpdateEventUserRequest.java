@@ -5,16 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.event.StateAction;
 
-@Getter
-@Setter
+@Data // TODO оставить 1 DTO
 public class UpdateEventUserRequest { // TODO: patch-поведение
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
@@ -121,5 +119,4 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
             event.setState(eventState);
         }
     }
-
 }
