@@ -74,6 +74,7 @@ public class EventController {
     //  и перенести туда обработку соответствующих эндпоинтов
     // TODO Лучше всю портянку параметров вынести в класс, например, EventParam, и в сервис уже передавать объект этого класса
 
+
     @GetMapping("/admin/events")
     public List<EventFullDto> get(@RequestParam(required = false) List<Long> users,
                                   @RequestParam(required = false) List<String> states,
