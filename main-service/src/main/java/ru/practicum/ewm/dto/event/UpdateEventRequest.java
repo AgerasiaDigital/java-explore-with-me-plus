@@ -11,7 +11,7 @@ import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.event.StateAction;
 
 @Data
-public class UpdateEventAdminRequest { // TODO: patch-поведение
+public class UpdateEventRequest {
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
     @Size(max = 2000)
@@ -27,7 +27,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    private LocationDto locationDto;
+    private Location locationDto;
 
     private Boolean paid;
 
@@ -35,7 +35,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private StateAction stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
+    private StateAction stateAction;
 
     @Size(min = 3)
     @Size(max = 120)
@@ -54,7 +54,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocationDto() {
+    public boolean hasLocation() {
         return locationDto != null;
     }
 
@@ -95,7 +95,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
             event.setCategory(category);
         }
 
-        if (hasLocationDto()) {
+        if (hasLocation()) {
             event.setLocation(location);
         }
 
