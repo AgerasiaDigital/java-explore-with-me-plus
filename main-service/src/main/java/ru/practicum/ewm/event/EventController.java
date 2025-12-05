@@ -3,8 +3,12 @@ package ru.practicum.ewm.event;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import ru.practicum.ewm.dto.event.*;
 
 import java.util.Collection;
@@ -51,18 +55,18 @@ public class EventController {
     @PatchMapping("/users/{userId}/events/{eventId}")
     public EventFullDto updateEventByCreator(@PathVariable Long userId,
                                              @PathVariable Long eventId,
-                                             @Valid @RequestBody UpdateEventUserRequest updateEventUserRequest) {
+                                             @Valid @RequestBody UpdateEventRequest updateEventRequest) {
         log.info("Запрос на редактирование события пользователем, userId={}, eventId={}", userId, eventId);
-        EventFullDto eventFullDto = eventService.updateEventByCreator(userId, eventId, updateEventUserRequest);
+        EventFullDto eventFullDto = eventService.updateEventByCreator(userId, eventId, updateEventRequest);
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
     }
 
     @PatchMapping("/users/events/{eventId}")
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
-                                           @Valid @RequestBody UpdateEventAdminRequest updateEventAdminRequest) {
+                                           @Valid @RequestBody UpdateEventRequest updateEventRequest) {
         log.info("Запрос на редактирование события админом, eventId={}", eventId);
-        EventFullDto eventFullDto = eventService.updateEventByAdmin(eventId, updateEventAdminRequest);
+        EventFullDto eventFullDto = eventService.updateEventByAdmin(eventId, updateEventRequest);
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
     }
@@ -76,7 +80,7 @@ public class EventController {
                                   @RequestParam(required = false, defaultValue = "0") Integer from,
                                   @RequestParam(required = false, defaultValue = "10") Integer size) {
 
-        log.debug("Запрос событий с параметрами: users: {}, states: {}, categories: {}, rangeStart: {}," +
+        log.debug("Запрос событий админом с параметрами: users: {}, states: {}, categories: {}, rangeStart: {}," +
                 "rangeEnd: {}, from: {}, size: {}", users, states, categories, rangeStart, rangeEnd, from, size);
         return eventService.getByAdmin(users,
                 states,
@@ -85,4 +89,13 @@ public class EventController {
                 from,
                 size);
     }
+
+    // Публичный поиск событий
+//    @GetMapping("/events")
+//    public Page<EventFullDto> publicSearchEvents(@Validated PublicEventSearchRequest request) {
+//        log.debug("Публичный запрос событий с параметрами: {}", request.toString());
+//        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
+//        return eventService.publicSearchEvents(request, pageable);
+//    }
+
 }

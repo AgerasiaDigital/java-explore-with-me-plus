@@ -13,6 +13,7 @@ import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.exception.AccessViolationException;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
@@ -61,11 +62,10 @@ public class EventService {
 
     //TODO добавить категории
     //TODO добавить обработку валидации
-    //TODO после заливки пр по категориям заменить NoSuchElementException тут и далее на кастомный NotFoundException
     @Transactional
     public EventFullDto create(Long userId, NewEventDto newEventDto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
         if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Дата события должна быть минимум через 2 часа");
         }
@@ -75,7 +75,7 @@ public class EventService {
 
     public Collection<EventShortDto> getEvent(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
         Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
         List<EventShortDto> eventFullDtoList = new ArrayList<>();
         for (Event e : events) {
@@ -88,9 +88,9 @@ public class EventService {
 
     public EventFullDto getEventFullDescription(Long userId, Long eventId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
                     "eventId=%s", userId, eventId));
@@ -101,9 +101,9 @@ public class EventService {
 
     //TODO вынести 2 часа - в настройки приложения
     @Transactional
-    public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventUserRequest updateEventUserRequest) {
+    public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
             throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
@@ -111,7 +111,7 @@ public class EventService {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 2 час до начала");
         }
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
                     "eventId=%s", userId, eventId));
@@ -119,29 +119,29 @@ public class EventService {
 
         // Проверка перехода статуса ---
         EventState newState =
-                StateTransitionValidator.changeState(event.getState(), updateEventUserRequest.getStateAction(), false);
+                StateTransitionValidator.changeState(event.getState(), updateEventRequest.getStateAction(), false);
 
         Category category = null;
-        if (updateEventUserRequest.hasCategory()) {
-            category = categoryRepository.findById(updateEventUserRequest.getCategory())
-                    .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
+        if (updateEventRequest.hasCategory()) {
+            category = categoryRepository.findById(updateEventRequest.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
         }
 
         Location newLocation = null;
-        if (updateEventUserRequest.hasLocationDto()) {
-            newLocation = eventMapper.toLocation(updateEventUserRequest.getLocationDto());
+        if (updateEventRequest.hasLocationDto()) {
+            newLocation = eventMapper.toLocation(updateEventRequest.getLocationDto());
         }
 
-        updateEventUserRequest.applyTo(event, category, newLocation, newState);
+        updateEventRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
     //TODO вынести 1час - в настройки приложения
     @Transactional
-    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
+    public EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NoSuchElementException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
             throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
@@ -150,20 +150,20 @@ public class EventService {
         }
 
         EventState newState =
-                StateTransitionValidator.changeState(event.getState(), updateEventAdminRequest.getStateAction(), true);
+                StateTransitionValidator.changeState(event.getState(), updateEventRequest.getStateAction(), true);
 
         Category category = null;
-        if (updateEventAdminRequest.hasCategory()) {
-            category = categoryRepository.findById(updateEventAdminRequest.getCategory())
-                    .orElseThrow(() -> new NoSuchElementException("Категория не найдена"));
+        if (updateEventRequest.hasCategory()) {
+            category = categoryRepository.findById(updateEventRequest.getCategory())
+                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
         }
 
         Location newLocation = null;
-        if (updateEventAdminRequest.hasLocationDto()) {
-            newLocation = eventMapper.toLocation(updateEventAdminRequest.getLocationDto());
+        if (updateEventRequest.hasLocationDto()) {
+            newLocation = eventMapper.toLocation(updateEventRequest.getLocationDto());
         }
 
-        updateEventAdminRequest.applyTo(event, category, newLocation, newState);
+        updateEventRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
@@ -241,4 +241,9 @@ public class EventService {
                 ))
                 .toList();
     }
+
+//    public List<Event> publicSearchEvents(PublicEventSearchRequest publicEventSearchRequest) {
+//        return eventRepository.publicSearchEvents(text, categories, paid, rangeStart, rangeEnd,
+//                sort, onlyAvailable, from, size);
+//    };
 }
