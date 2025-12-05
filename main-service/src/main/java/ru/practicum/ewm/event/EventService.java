@@ -12,7 +12,6 @@ import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.dto.event.*;
-import ru.practicum.ewm.dto.user.Role;
 import ru.practicum.ewm.exception.AccessViolationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
@@ -99,19 +98,6 @@ public class EventService {
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
-//    private void applyStateTransition(Event event, StateAction action) {
-//        StateTransitionValidator.validate(event, action);
-//        event.setState(action.toEventState());
-//        if (action == StateAction.PUBLISH_EVENT) {
-//            event.setPublishedOn(java.time.LocalDateTime.now());
-//        }
-//    }
-
-    private void validateAction(StateAction action, Role role) {
-        if (action.getAllowedRole() != role) {
-            throw new ValidationException("Role " + role + " cannot perform " + action);
-        }
-    }
 
     //TODO вынести 2 часа - в настройки приложения
     @Transactional
