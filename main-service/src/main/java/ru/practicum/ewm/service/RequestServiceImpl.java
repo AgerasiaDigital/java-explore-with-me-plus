@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.event.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.dto.event.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.dto.event.ParticipationRequestDto;
+import ru.practicum.ewm.event.EventRepository;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
@@ -18,7 +19,6 @@ import ru.practicum.ewm.model.request.RequestStatus;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
-import ru.practicum.ewm.event.EventRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

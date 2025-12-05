@@ -3,13 +3,12 @@ package ru.practicum.ewm.event;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
-import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.dto.event.EventFullDto;
+import ru.practicum.ewm.dto.event.EventShortDto;
+import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.dto.event.UpdateEventRequest;
 
 import java.util.Collection;
 import java.util.List;

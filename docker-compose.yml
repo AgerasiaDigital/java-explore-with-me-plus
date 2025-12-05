@@ -23,7 +23,7 @@ services:
       - POSTGRES_USER=statsuser
       - POSTGRES_PASSWORD=statspass
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U statsuser -d stats"]
+      test: [ "CMD-SHELL", "pg_isready -U statsuser -d stats" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -54,7 +54,7 @@ services:
       - POSTGRES_USER=ewmuser
       - POSTGRES_PASSWORD=ewmpass
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ewmuser -d ewm"]
+      test: [ "CMD-SHELL", "pg_isready -U ewmuser -d ewm" ]
       interval: 10s
       timeout: 5s
       retries: 5

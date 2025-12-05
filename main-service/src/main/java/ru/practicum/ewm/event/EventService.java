@@ -11,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
-import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.dto.event.EventFullDto;
+import ru.practicum.ewm.dto.event.EventShortDto;
+import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.dto.event.UpdateEventRequest;
 import ru.practicum.ewm.exception.AccessViolationException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
@@ -97,7 +100,6 @@ public class EventService {
         }
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
-
 
     //TODO вынести 2 часа - в настройки приложения
     @Transactional
