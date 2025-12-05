@@ -19,15 +19,15 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    private List<CategoryDto> get(@RequestParam(required = false, defaultValue = "0") @Positive int from,
-                                  @RequestParam(required = false, defaultValue = "10") @Positive int size) {
+    public List<CategoryDto> get(@RequestParam(required = false, defaultValue = "0") Integer from,
+                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.debug("GET /categories: from = {}, size = {}", from, size);
 
         return categoryService.find(from, size);
     }
 
     @GetMapping("/{catId}")
-    private CategoryDto getById(@PathVariable @Positive Long catId) {
+    public CategoryDto getById(@PathVariable @Positive Long catId) {
         log.debug("GET /categories/{}", catId);
 
         return categoryService.findById(catId);

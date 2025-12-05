@@ -119,4 +119,5 @@ public class UpdateEventRequest {
             event.setState(eventState);
         }
     }
+
 }
