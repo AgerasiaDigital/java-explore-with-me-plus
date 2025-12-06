@@ -1,11 +1,10 @@
 package ru.practicum.ewm.event;
 
-import com.querydsl.core.BooleanBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatClient;
@@ -22,14 +21,16 @@ import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
-import ru.practicum.ewm.model.event.QEvent;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @AllArgsConstructor
@@ -171,81 +172,89 @@ public class EventService {
     }
 
 
-    public List<EventFullDto> getByAdmin(List<Long> users, // TODO: в param-класс
-                                         List<String> states,
-                                         List<Long> categories,
-                                         String rangeStart,
-                                         String rangeEnd,
-                                         Integer from,
-                                         Integer size) {
-        QEvent qEvent = QEvent.event;
-        BooleanBuilder builder = new BooleanBuilder();
+//    public List<EventFullDto> getByAdmin(List<Long> users, // TODO: в param-класс
+//                                         List<String> states,
+//                                         List<Long> categories,
+//                                         String rangeStart,
+//                                         String rangeEnd,
+//                                         Integer from,
+//                                         Integer size) {
+//        QEvent qEvent = QEvent.event;
+//        BooleanBuilder builder = new BooleanBuilder();
+//
+//        if (users != null && !users.isEmpty()) {
+//            builder.and(qEvent.initiator.id.in(users));
+//        }
+//
+//        if (states != null && !states.isEmpty()) {
+//            List<EventState> stateEnums = states.stream()
+//                    .map(stateString -> {
+//                        Optional<EventState> eventState = EventState.from(stateString);
+//
+//                        if (eventState.isEmpty()) {
+//                            log.warn("incorrect state - {}", stateString);
+//                            throw new ValidationException("incorrect state");
+//                        }
+//
+//                        return eventState.get();
+//                    })
+//                    .toList();
+//            builder.and(qEvent.state.in(stateEnums));
+//        }
+//
+//        if (categories != null && !categories.isEmpty()) {
+//            builder.and(qEvent.category.id.in(categories));
+//        }
+//
+//        if (rangeStart != null && !rangeStart.trim().isEmpty()) {
+//            try {
+//                LocalDateTime start = LocalDateTime.parse(rangeStart, FORMATTER);
+//                builder.and(qEvent.eventDate.goe(start));
+//            } catch (Exception e) {
+//                log.warn("invalid rangeStart format - {}", rangeStart);
+//                throw new ValidationException("invalid rangeStart format");
+//            }
+//        }
+//
+//        if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
+//            try {
+//                LocalDateTime end = LocalDateTime.parse(rangeEnd, FORMATTER);
+//                builder.and(qEvent.eventDate.loe(end));
+//            } catch (Exception e) {
+//                log.warn("invalid rangeEnd format - {}", rangeEnd);
+//                throw new IllegalArgumentException("invalid rangeEnd format");
+//            }
+//        }
+//
+//        if (builder.getValue() == null) {
+//            return Collections.emptyList();
+//        }
+//
+//        int page = from / size;
+//        Pageable pageable = PageRequest.of(page, size);
+//
+//        Page<Event> events = eventRepository.findAll(builder.getValue(), pageable);
+//
+//        // requests and views
+//        return events.stream()
+//                .map(event -> eventMapper.toFullDto(
+//                        event,
+//                        getRequests(event.getId()),
+//                        getViews(event.getId())
+//                ))
+//                .toList();
+//    }
 
-        if (users != null && !users.isEmpty()) {
-            builder.and(qEvent.initiator.id.in(users));
-        }
+    public Page<EventFullDto> publicSearchEvents(EventFilter eventFilter, Pageable pageable) {
+        Specification<Event> spec = EventSpecs.withFilter(eventFilter);
+        Page<Event> events = eventRepository.findAll(spec, pageable);
 
-        if (states != null && !states.isEmpty()) {
-            List<EventState> stateEnums = states.stream()
-                    .map(stateString -> {
-                        Optional<EventState> eventState = EventState.from(stateString);
 
-                        if (eventState.isEmpty()) {
-                            log.warn("incorrect state - {}", stateString);
-                            throw new ValidationException("incorrect state");
-                        }
+        // Map<Long, Long> requests = requestService.getRequests(events);
+        // Map<Long, Long> views = statsService.getViews(events);
 
-                        return eventState.get();
-                    })
-                    .toList();
-            builder.and(qEvent.state.in(stateEnums));
-        }
-
-        if (categories != null && !categories.isEmpty()) {
-            builder.and(qEvent.category.id.in(categories));
-        }
-
-        if (rangeStart != null && !rangeStart.trim().isEmpty()) {
-            try {
-                LocalDateTime start = LocalDateTime.parse(rangeStart, FORMATTER);
-                builder.and(qEvent.eventDate.goe(start));
-            } catch (Exception e) {
-                log.warn("invalid rangeStart format - {}", rangeStart);
-                throw new ValidationException("invalid rangeStart format");
-            }
-        }
-
-        if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
-            try {
-                LocalDateTime end = LocalDateTime.parse(rangeEnd, FORMATTER);
-                builder.and(qEvent.eventDate.loe(end));
-            } catch (Exception e) {
-                log.warn("invalid rangeEnd format - {}", rangeEnd);
-                throw new IllegalArgumentException("invalid rangeEnd format");
-            }
-        }
-
-        if (builder.getValue() == null) {
-            return Collections.emptyList();
-        }
-
-        int page = from / size;
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<Event> events = eventRepository.findAll(builder.getValue(), pageable);
-
-        // requests and views
-        return events.stream()
-                .map(event -> eventMapper.toFullDto(
-                        event,
-                        getRequests(event.getId()),
-                        getViews(event.getId())
-                ))
-                .toList();
+        return events.map(event ->
+                eventMapper.toFullDto(event, 10L, 20L)
+        );
     }
-
-//    public List<Event> publicSearchEvents(PublicEventSearchRequest publicEventSearchRequest) {
-//        return eventRepository.publicSearchEvents(text, categories, paid, rangeStart, rangeEnd,
-//                sort, onlyAvailable, from, size);
-//    };
 }

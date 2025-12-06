@@ -3,12 +3,10 @@ package ru.practicum.ewm.event;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.dto.event.EventFullDto;
-import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.event.UpdateEventRequest;
+import ru.practicum.ewm.dto.event.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -75,31 +73,33 @@ public class EventController {
     // TODO Лучше всю портянку параметров вынести в класс, например, EventParam, и в сервис уже передавать объект этого класса
 
 
-    @GetMapping("/admin/events")
-    public List<EventFullDto> get(@RequestParam(required = false) List<Long> users,
-                                  @RequestParam(required = false) List<String> states,
-                                  @RequestParam(required = false) List<Long> categories,
-                                  @RequestParam(required = false) String rangeStart,
-                                  @RequestParam(required = false) String rangeEnd,
-                                  @RequestParam(required = false, defaultValue = "0") Integer from,
-                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
-
-        log.debug("Запрос событий админом с параметрами: users: {}, states: {}, categories: {}, rangeStart: {}," +
-                "rangeEnd: {}, from: {}, size: {}", users, states, categories, rangeStart, rangeEnd, from, size);
-        return eventService.getByAdmin(users,
-                states,
-                categories, rangeStart,
-                rangeEnd,
-                from,
-                size);
-    }
+//    @GetMapping("/admin/events")
+//    public List<EventFullDto> get(@RequestParam(required = false) List<Long> users,
+//                                  @RequestParam(required = false) List<String> states,
+//                                  @RequestParam(required = false) List<Long> categories,
+//                                  @RequestParam(required = false) String rangeStart,
+//                                  @RequestParam(required = false) String rangeEnd,
+//                                  @RequestParam(required = false, defaultValue = "0") Integer from,
+//                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
+//
+//        log.debug("Запрос событий админом с параметрами: users: {}, states: {}, categories: {}, rangeStart: {}," +
+//                "rangeEnd: {}, from: {}, size: {}", users, states, categories, rangeStart, rangeEnd, from, size);
+//        return eventService.getByAdmin(users,
+//                states,
+//                categories, rangeStart,
+//                rangeEnd,
+//                from,
+//                size);
+//    }
 
     // Публичный поиск событий
-//    @GetMapping("/events")
-//    public Page<EventFullDto> publicSearchEvents(@Validated PublicEventSearchRequest request) {
-//        log.debug("Публичный запрос событий с параметрами: {}", request.toString());
-//        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
-//        return eventService.publicSearchEvents(request, pageable);
-//    }
+    @GetMapping("/events")
+    public List<EventFullDto> getEvents(EventFilter filter,
+                                        PageRequestDto pageRequestDto
+    ) {
+        log.debug("Публичный запрос событий с параметрами: {}", filter);
+        Page<EventFullDto> page = eventService.publicSearchEvents(filter, pageRequestDto.toPageable());
+        return page.getContent();
+    }
 
 }
