@@ -7,11 +7,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class EventSpecification {
-    public static Specification<Event> withInitiatorId(EventInitiatorIdFilter f) {
-        return Specification
-                .where(initiatorId(f.getInitiator()));
-    }
-
     public static Specification<Event> withPublicFilter(EventPublicFilter f) {
         return Specification
                 .where(paid(f.getPaid()))
@@ -71,11 +66,6 @@ public class EventSpecification {
                 (initiatorIds == null || initiatorIds.isEmpty())
                         ? null
                         : root.get("initiator").get("id").in(initiatorIds);
-    }
-
-    public static Specification<Event> initiatorId(Long initiatorId) {
-        return (root, query, cb) ->
-                initiatorId == null ? null : cb.equal(root.get("initiator").get("id"), initiatorId);
     }
 
     public static Specification<Event> states(List<String> states) {

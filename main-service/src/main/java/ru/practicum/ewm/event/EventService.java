@@ -171,82 +171,21 @@ public class EventService {
         return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
+    public Page<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable) {
+        Specification<Event> spec = EventSpecification.withAdminFilter(eventAdminFilter);
+        Page<Event> events = eventRepository.findAll(spec, pageable);
 
-//    public List<EventFullDto> getByAdmin(List<Long> users, // TODO: в param-класс
-//                                         List<String> states,
-//                                         List<Long> categories,
-//                                         String rangeStart,
-//                                         String rangeEnd,
-//                                         Integer from,
-//                                         Integer size) {
-//        QEvent qEvent = QEvent.event;
-//        BooleanBuilder builder = new BooleanBuilder();
-//
-//        if (users != null && !users.isEmpty()) {
-//            builder.and(qEvent.initiator.id.in(users));
-//        }
-//
-//        if (states != null && !states.isEmpty()) {
-//            List<EventState> stateEnums = states.stream()
-//                    .map(stateString -> {
-//                        Optional<EventState> eventState = EventState.from(stateString);
-//
-//                        if (eventState.isEmpty()) {
-//                            log.warn("incorrect state - {}", stateString);
-//                            throw new ValidationException("incorrect state");
-//                        }
-//
-//                        return eventState.get();
-//                    })
-//                    .toList();
-//            builder.and(qEvent.state.in(stateEnums));
-//        }
-//
-//        if (categories != null && !categories.isEmpty()) {
-//            builder.and(qEvent.category.id.in(categories));
-//        }
-//
-//        if (rangeStart != null && !rangeStart.trim().isEmpty()) {
-//            try {
-//                LocalDateTime start = LocalDateTime.parse(rangeStart, FORMATTER);
-//                builder.and(qEvent.eventDate.goe(start));
-//            } catch (Exception e) {
-//                log.warn("invalid rangeStart format - {}", rangeStart);
-//                throw new ValidationException("invalid rangeStart format");
-//            }
-//        }
-//
-//        if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
-//            try {
-//                LocalDateTime end = LocalDateTime.parse(rangeEnd, FORMATTER);
-//                builder.and(qEvent.eventDate.loe(end));
-//            } catch (Exception e) {
-//                log.warn("invalid rangeEnd format - {}", rangeEnd);
-//                throw new IllegalArgumentException("invalid rangeEnd format");
-//            }
-//        }
-//
-//        if (builder.getValue() == null) {
-//            return Collections.emptyList();
-//        }
-//
-//        int page = from / size;
-//        Pageable pageable = PageRequest.of(page, size);
-//
-//        Page<Event> events = eventRepository.findAll(builder.getValue(), pageable);
-//
-//        // requests and views
-//        return events.stream()
-//                .map(event -> eventMapper.toFullDto(
-//                        event,
-//                        getRequests(event.getId()),
-//                        getViews(event.getId())
-//                ))
-//                .toList();
-//    }
+        // Map<Long, Long> requests = requestService.getRequests(events);
+        // Map<Long, Long> views = statsService.getViews(events);
 
-    public Page<EventFullDto> publicSearchEvents(EventFilter eventFilter, Pageable pageable) {
-        Specification<Event> spec = EventSpecs.withFilter(eventFilter);
+        return events.map(event ->
+                eventMapper.toFullDto(event, 10L, 20L)
+        );
+    }
+
+
+    public Page<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable) {
+        Specification<Event> spec = EventSpecification.withPublicFilter(eventPublicFilter);
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
 
