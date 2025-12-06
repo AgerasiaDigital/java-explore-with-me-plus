@@ -68,37 +68,22 @@ public class EventController {
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
     }
-    // TODO Для лучшей читаемости можно сделать несколько контроллеров событий (по уровню доступа - admin, public и private)
-    //  и перенести туда обработку соответствующих эндпоинтов
-    // TODO Лучше всю портянку параметров вынести в класс, например, EventParam, и в сервис уже передавать объект этого класса
 
-
-//    @GetMapping("/admin/events")
-//    public List<EventFullDto> get(@RequestParam(required = false) List<Long> users,
-//                                  @RequestParam(required = false) List<String> states,
-//                                  @RequestParam(required = false) List<Long> categories,
-//                                  @RequestParam(required = false) String rangeStart,
-//                                  @RequestParam(required = false) String rangeEnd,
-//                                  @RequestParam(required = false, defaultValue = "0") Integer from,
-//                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
-//
-//        log.debug("Запрос событий админом с параметрами: users: {}, states: {}, categories: {}, rangeStart: {}," +
-//                "rangeEnd: {}, from: {}, size: {}", users, states, categories, rangeStart, rangeEnd, from, size);
-//        return eventService.getByAdmin(users,
-//                states,
-//                categories, rangeStart,
-//                rangeEnd,
-//                from,
-//                size);
-//    }
+    // Админский запрос событий
+    @GetMapping("/admin/events")
+    public List<EventFullDto> getEventsAdmin(EventAdminFilter eventAdminFilter,
+                                             PageRequestDto pageRequestDto) {
+        log.debug("Админский запрос событий с параметрами: {}", eventAdminFilter);
+        Page<EventFullDto> page = eventService.adminSearchEvents(eventAdminFilter, pageRequestDto.toPageable());
+        return page.getContent();
+    }
 
     // Публичный поиск событий
     @GetMapping("/events")
-    public List<EventFullDto> getEvents(EventFilter filter,
-                                        PageRequestDto pageRequestDto
-    ) {
-        log.debug("Публичный запрос событий с параметрами: {}", filter);
-        Page<EventFullDto> page = eventService.publicSearchEvents(filter, pageRequestDto.toPageable());
+    public List<EventFullDto> getEvents(EventPublicFilter eventPublicFilter,
+                                        PageRequestDto pageRequestDto) {
+        log.debug("Публичный запрос событий с параметрами: {}", eventPublicFilter);
+        Page<EventFullDto> page = eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
         return page.getContent();
     }
 

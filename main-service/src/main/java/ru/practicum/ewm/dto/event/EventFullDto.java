@@ -7,6 +7,8 @@ import lombok.Data;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.dto.user.UserShortDto;
 
+import java.time.LocalDateTime;
+
 @Data
 public class EventFullDto {
     @NotBlank
@@ -18,13 +20,13 @@ public class EventFullDto {
     private Long confirmedRequests; // дорасчёт, в базе не хранится
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String createdOn;
+    private LocalDateTime createdOn;
 
     private String description;
 
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String eventDate;
+    private LocalDateTime eventDate;
 
     private Long id;
 
@@ -40,7 +42,7 @@ public class EventFullDto {
     private int participantLimit = 0;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String publishedOn;
+    private LocalDateTime publishedOn;
 
     private boolean requestModeration = true;
 
