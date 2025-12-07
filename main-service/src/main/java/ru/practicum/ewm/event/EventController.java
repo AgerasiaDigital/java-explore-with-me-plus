@@ -1,13 +1,17 @@
 package ru.practicum.ewm.event;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.client.StatClient;
+import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.ewm.dto.event.*;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -18,6 +22,16 @@ import java.util.List;
 
 public class EventController {
     private final EventService eventService;
+    private final StatClient statClient;
+
+    private void saveHit(HttpServletRequest request) {
+        statClient.hit(new EndpointHitDto(
+                "ewm-service",
+                request.getRequestURI(),
+                request.getRemoteAddr(),
+                LocalDateTime.now()
+        ));
+    }
 
     // Создание события пользователем
     @PostMapping("/users/{userId}/events")
@@ -33,7 +47,7 @@ public class EventController {
     @GetMapping("/users/{userId}/events")
     public Collection<EventShortDto> getEventsOfUser(@PathVariable Long userId) {
         log.info("Запрос событий пользователя, userId={}", userId);
-        Collection<EventShortDto> events = eventService.getEvent(userId);
+        Collection<EventShortDto> events = eventService.getEventByUserId(userId);
         log.info("Найдено событий: {}", events.size());
         events.forEach(ev -> log.debug("EVENT: {}", ev));
         return events;
@@ -81,10 +95,23 @@ public class EventController {
     // Публичный поиск событий
     @GetMapping("/events")
     public List<EventFullDto> getEvents(EventPublicFilter eventPublicFilter,
-                                        PageRequestDto pageRequestDto) {
-        log.debug("Публичный запрос событий с параметрами: {}", eventPublicFilter);
+                                        PageRequestDto pageRequestDto,
+                                        HttpServletRequest request) {
+        log.info("Публичный запрос событий с параметрами: {}", eventPublicFilter);
+        log.debug("Параметры запроса: {}", eventPublicFilter);
+        log.info("client ip: {}", request.getRemoteAddr());
+        saveHit(request);
         Page<EventFullDto> page = eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
         return page.getContent();
     }
 
+    // Публичный запрос подробной информации по событию
+    @GetMapping("/events/{eventId}")
+    public EventFullDto getEvent(@PathVariable Long eventId,
+                                 HttpServletRequest request) {
+        log.info("Публичный запрос подробной информации по событию с id: {}", eventId);
+        log.info("client ip: {}", request.getRemoteAddr());
+        saveHit(request);
+        return eventService.getEvent(eventId);
+    }
 }
