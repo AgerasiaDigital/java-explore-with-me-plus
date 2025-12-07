@@ -45,9 +45,12 @@ public class EventController {
 
     // Получение всех событий созданных пользователем, без подробностей
     @GetMapping("/users/{userId}/events")
-    public Collection<EventShortDto> getEventsOfUser(@PathVariable Long userId) {
+    public Collection<EventShortDto> getEventsOfUser(@PathVariable Long userId,
+                                                     EventInitiatorIdFilter eventInitiatorIdFilter,
+                                                     PageRequestDto pageRequestDto) {
         log.info("Запрос событий пользователя, userId={}", userId);
-        Collection<EventShortDto> events = eventService.getEventByUserId(userId);
+        Collection<EventShortDto> events = eventService.getEventByUserId(eventInitiatorIdFilter,
+                pageRequestDto.toPageable());
         log.info("Найдено событий: {}", events.size());
         events.forEach(ev -> log.debug("EVENT: {}", ev));
         return events;
