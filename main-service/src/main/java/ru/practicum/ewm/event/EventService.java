@@ -77,17 +77,24 @@ public class EventService {
         return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(savedEvent.getId()));
     }
 
-    public Collection<EventShortDto> getEventByUserId(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
-        Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
-        List<EventShortDto> eventFullDtoList = new ArrayList<>();
+    public Collection<EventShortDto> getEventByUserId(EventInitiatorIdFilter eventInitiatorIdFilter,
+                                                      Pageable pageable) {
+        // User user = userRepository.findById(userId)
+        //         .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+        Specification<Event> spec = EventSpecification.withInitiatorId(eventInitiatorIdFilter);
+        Page<Event> events = eventRepository.findAll(spec, pageable);
+
+        //  Map<Long, Long> requests = requestService.getRequests(events);
+        //  Map<Long, Long> views = statClient.getStats(new StatsParamDto());
+
+//        Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
+        List<EventShortDto> eventShortDtoList = new ArrayList<>();
         for (Event e : events) {
-            Long request = getRequests(e.getId());
-            Long views = getViews(e.getId());
-            eventFullDtoList.add(eventMapper.toShortDto(e, request, views));
+            Long request = 10L;
+            Long views = 20L;
+            eventShortDtoList.add(eventMapper.toShortDto(e, request, views));
         }
-        return eventFullDtoList;
+        return eventShortDtoList;
     }
 
     public EventFullDto getEventFullDescription(Long userId, Long eventId) {
