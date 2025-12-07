@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.service.CategoryService;
 
@@ -21,7 +20,7 @@ public class CategoryController {
 
     @GetMapping
     public List<CategoryDto> get(@RequestParam(required = false, defaultValue = "0") Integer from,
-                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                 @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.debug("GET /categories: from = {}, size = {}", from, size);
 
         return categoryService.find(from, size);

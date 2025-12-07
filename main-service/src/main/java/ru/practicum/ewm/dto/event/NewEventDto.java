@@ -1,6 +1,8 @@
 package ru.practicum.ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -28,6 +30,8 @@ public class NewEventDto {
     private LocalDateTime eventDate;
 
     @NotNull
+    @Valid
+    @JsonProperty("location")
     private LocationDto location;
 
     private boolean paid = false;

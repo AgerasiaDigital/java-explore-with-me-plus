@@ -9,7 +9,6 @@ import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 
-import java.net.URI;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +20,7 @@ public class StatClientImpl implements StatClient {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public StatClientImpl(String statUrl) {
+        log.info("Stat-client использует url: {}", statUrl);
         restClient = RestClient.builder()
                 .baseUrl(statUrl)
                 .build();
@@ -30,12 +30,12 @@ public class StatClientImpl implements StatClient {
     @Override
     public void hit(EndpointHitDto endpointHitDto) {
         restClient.post()
-                .uri(URI.create("/hit"))
+                .uri("/hit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(endpointHitDto)
                 .retrieve()
                 .toBodilessEntity();
-        log.debug("hit: {}", endpointHitDto);
+        log.debug("Stat-client отправил статистику по url: {}", endpointHitDto);
     }
 
     // TODO: обработка ошибок

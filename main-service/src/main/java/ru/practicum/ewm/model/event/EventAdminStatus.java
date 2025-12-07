@@ -12,7 +12,6 @@ public enum EventAdminStatus {
                 return Optional.of(state);
             }
         }
-
         return Optional.empty();
     }
 }

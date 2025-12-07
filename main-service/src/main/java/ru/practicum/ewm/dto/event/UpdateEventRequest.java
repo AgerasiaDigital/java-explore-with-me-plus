@@ -1,12 +1,19 @@
 package ru.practicum.ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import ru.practicum.ewm.model.category.Category;
+import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
+import ru.practicum.ewm.model.event.Location;
+import ru.practicum.ewm.model.event.StateAction;
 
 @Data
-public class UpdateEventAdminRequest { // TODO: patch-поведение
+public class UpdateEventRequest {
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
     @Size(max = 2000)
@@ -22,7 +29,9 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String eventDate;
 
-    private Location location;
+    @Valid
+    @JsonProperty("location")
+    private LocationDto locationDto;
 
     private Boolean paid;
 
@@ -30,7 +39,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private String stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
+    private StateAction stateAction;
 
     @Size(min = 3)
     @Size(max = 120)
@@ -49,8 +58,8 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocation() {
-        return location != null;
+    public boolean hasLocationDto() {
+        return locationDto != null;
     }
 
     public boolean hasPaid() {
@@ -72,4 +81,43 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
     public boolean hasTitle() {
         return title != null;
     }
+
+    public void applyTo(Event event, Category category, Location location, EventState eventState) {
+        if (hasTitle()) {
+            event.setTitle(title);
+        }
+
+        if (hasAnnotation()) {
+            event.setAnnotation(annotation);
+        }
+
+        if (hasDescription()) {
+            event.setDescription(description);
+        }
+
+        if (hasCategory()) {
+            event.setCategory(category);
+        }
+
+        if (hasLocationDto()) {
+            event.setLocation(location);
+        }
+
+        if (hasPaid()) {
+            event.setPaid(paid);
+        }
+
+        if (hasParticipantLimit()) {
+            event.setParticipantLimit(participantLimit);
+        }
+
+        if (hasRequestModeration()) {
+            event.setRequestModeration(requestModeration);
+        }
+
+        if (hasStateAction()) {
+            event.setState(eventState);
+        }
+    }
+
 }
