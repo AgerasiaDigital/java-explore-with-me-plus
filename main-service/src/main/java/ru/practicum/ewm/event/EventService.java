@@ -27,8 +27,10 @@ import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @AllArgsConstructor
@@ -41,27 +43,21 @@ public class EventService {
     private final StatClient statClient;
     private final CategoryRepository categoryRepository;
 
-    private Long extractId(String uri) {
-        return Long.parseLong(uri.substring(uri.lastIndexOf('/') + 1));
-    }
     //TODO убрать костыль указания временного диапазона
-
-    private Map<Long, Long> getViews(List<Event> events) {
-        List<String> uriList = events.stream()
-                .map(e -> "/events/" + e.getId())
-                .toList();
-
+    private Long getViews(Long eventId) {
         StatsParamDto statsParamDto = new StatsParamDto();
         statsParamDto.setStart(LocalDateTime.now().minusYears(10));
         statsParamDto.setEnd(LocalDateTime.now().plusYears(10));
-        statsParamDto.setUris(uriList);
-
+        statsParamDto.setUris(List.of("/events/" + eventId));
         List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
-        return viewStatsDtoList.stream()
-                .collect(Collectors.toMap(
-                        dto -> Long.parseLong(dto.getUri().substring(dto.getUri().lastIndexOf('/') + 1)),
-                        ViewStatsDto::getHits
-                ));
+        Long hits = 0L;
+        if (!viewStatsDtoList.isEmpty()) {
+            hits = viewStatsDtoList.get(0).getHits();
+            log.debug("Hits получены: {}", hits);
+        } else {
+            log.debug("Статистика пустая, hits = 0");
+        }
+        return hits;
     }
 
     private Long getRequests(Long eventId) {
@@ -78,23 +74,27 @@ public class EventService {
             throw new ValidationException("Дата события должна быть минимум через 2 часа");
         }
         Event savedEvent = eventRepository.save(eventMapper.toEvent(newEventDto, user));
-        return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(List.of(savedEvent)).get(savedEvent.getId()));
+        return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(savedEvent.getId()));
     }
 
     public Collection<EventShortDto> getEventByUserId(EventInitiatorIdFilter eventInitiatorIdFilter,
                                                       Pageable pageable) {
+        // User user = userRepository.findById(userId)
+        //         .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
         Specification<Event> spec = EventSpecification.withInitiatorId(eventInitiatorIdFilter);
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
-        Map<Long, Long> viewsMap = getViews(events.getContent());
+        //  Map<Long, Long> requests = requestService.getRequests(events);
+        //  Map<Long, Long> views = statClient.getStats(new StatsParamDto());
 
-        return events.getContent().stream()
-                .map(event -> eventMapper.toShortDto(
-                        event,
-                        10L, // confirmedRequests пример
-                        viewsMap.getOrDefault(event.getId(), 0L)
-                ))
-                .toList();
+//        Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
+        List<EventShortDto> eventShortDtoList = new ArrayList<>();
+        for (Event e : events) {
+            Long request = 10L;
+            Long views = 20L;
+            eventShortDtoList.add(eventMapper.toShortDto(e, request, views));
+        }
+        return eventShortDtoList;
     }
 
     public EventFullDto getEventFullDescription(Long userId, Long eventId) {
@@ -106,7 +106,7 @@ public class EventService {
             throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
                     "eventId=%s", userId, eventId));
         }
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
     //TODO вынести 2 часа - в настройки приложения
@@ -144,7 +144,7 @@ public class EventService {
 
         updateEventRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
     //TODO вынести 1час - в настройки приложения
@@ -174,8 +174,8 @@ public class EventService {
         }
 
         updateEventRequest.applyTo(event, category, newLocation, newState);
-        Event savedEvent = eventRepository.save(event);
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(savedEvent)).get(savedEvent.getId()));
+        eventRepository.save(event);
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 
     public Page<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable) {
@@ -183,32 +183,29 @@ public class EventService {
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
         // Map<Long, Long> requests = requestService.getRequests(events);
-        Map<Long, Long> viewsMap = getViews(events.getContent());
+        // Map<Long, Long> views = statsService.getViews(events);
 
         return events.map(event ->
-                eventMapper.toFullDto(event,
-                        10L,
-                        viewsMap.getOrDefault(event.getId(), 0L))
+                eventMapper.toFullDto(event, 10L, 20L)
         );
     }
+
 
     public Page<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable) {
         Specification<Event> spec = EventSpecification.withPublicFilter(eventPublicFilter);
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
-        //Map<Long, Long> requests = requestService.getRequests(events);
-        Map<Long, Long> viewsMap = getViews(events.getContent());
+        // Map<Long, Long> requests = requestService.getRequests(events);
+        // Map<Long, Long> views = statsService.getViews(events);
 
         return events.map(event ->
-                eventMapper.toFullDto(event,
-                        10L,
-                        viewsMap.getOrDefault(event.getId(), 0L))
+                eventMapper.toFullDto(event, 10L, 20L)
         );
     }
 
     public EventFullDto getEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 }
