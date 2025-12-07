@@ -77,7 +77,7 @@ public class EventService {
         return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(savedEvent.getId()));
     }
 
-    public Collection<EventShortDto> getEvent(Long userId) {
+    public Collection<EventShortDto> getEventByUserId(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
         Collection<Event> events = eventRepository.findAllByInitiatorId(userId);
@@ -188,12 +188,17 @@ public class EventService {
         Specification<Event> spec = EventSpecification.withPublicFilter(eventPublicFilter);
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
-
         // Map<Long, Long> requests = requestService.getRequests(events);
         // Map<Long, Long> views = statsService.getViews(events);
 
         return events.map(event ->
                 eventMapper.toFullDto(event, 10L, 20L)
         );
+    }
+
+    public EventFullDto getEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+        return eventMapper.toFullDto(event, getRequests(eventId), getViews(eventId));
     }
 }
