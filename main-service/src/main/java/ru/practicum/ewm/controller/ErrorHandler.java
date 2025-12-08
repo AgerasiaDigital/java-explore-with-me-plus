@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.ewm.dto.ApiError;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -41,6 +42,25 @@ public class ErrorHandler {
         return new ApiError(String.join(". ", errors),
                 e.getMessage(),
                 "Method arguments was not valid",
+                HttpStatus.BAD_REQUEST.name(),
+                LocalDateTime.now().format(formatter));
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleValidationException(final ValidationException e) {
+        log.warn("400 {}", e.getMessage(), e);
+
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+        e.printStackTrace(printWriter);
+
+        String stackTrace = stringWriter.toString();
+
+        return new ApiError(stackTrace,
+                e.getMessage(),
+                "Недопустимое значение параметра",
                 HttpStatus.BAD_REQUEST.name(),
                 LocalDateTime.now().format(formatter));
     }

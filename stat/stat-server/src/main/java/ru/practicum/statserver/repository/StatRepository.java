@@ -31,7 +31,7 @@ public interface StatRepository extends JpaRepository<StatModel, Long> {
             SELECT new ru.practicum.dto.ViewStatsDto(
                 s.app,
                 s.uri,
-               CASE WHEN :unique = TRUE
+               CASE WHEN :unique = FALSE
                     THEN COUNT(DISTINCT s.ip)
                     ELSE COUNT(s.ip)
                END
