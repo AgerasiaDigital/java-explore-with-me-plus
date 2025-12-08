@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.dto.category.NewCategoryDto;
+import ru.practicum.ewm.event.EventRepository;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.CategoryMapper;
@@ -23,6 +24,7 @@ import java.util.Optional;
 @Transactional
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final EventRepository eventRepository;
 
     @Override
     public CategoryDto create(NewCategoryDto request) {
@@ -48,7 +50,11 @@ public class CategoryServiceImpl implements CategoryService {
             log.warn("Category with id = {} not found", categoryId);
             throw new NotFoundException(String.format("Category with id = %d not found", categoryId));
         }
-        // TODO: нужна проверка на наличие событий с этой категорией
+
+        if (eventRepository.existsByCategoryId(categoryId)) {
+            log.warn("There are events with this category");
+            throw new ConflictException("There are events with this category");
+        }
 
         categoryRepository.deleteById(categoryId);
         log.info("Category with id = {} has been deleted", categoryId);
@@ -65,13 +71,16 @@ public class CategoryServiceImpl implements CategoryService {
             throw new NotFoundException(String.format("Category with id = %d not found", categoryId));
         }
 
-        // TODO: можно заменить на попытку записи и отлов DataIntegrityViolationException
-        if (categoryRepository.findByName(request.getName()).isPresent()) {
-            log.warn("Category with name = {} already exists", request.getName());
-            throw new ConflictException(String.format("Category with name = %s already exists", request.getName()));
-        }
-
         Category category = maybeCategory.get();
+
+        // TODO: можно заменить на попытку записи и отлов DataIntegrityViolationException
+        categoryRepository.findByName(request.getName())
+                .ifPresent(foundCategory -> {
+            if (!foundCategory.getId().equals(categoryId)) {
+                log.warn("Category with name = {} already exists", request.getName());
+                throw new ConflictException(String.format("Category with name = %s already exists", request.getName()));
+            }
+        });
 
         CategoryMapper.updateFields(category, request);
         categoryRepository.save(category);
