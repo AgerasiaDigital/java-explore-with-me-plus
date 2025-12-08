@@ -8,18 +8,23 @@ import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.UpdateEventRequest;
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 public interface EventService {
     EventFullDto create(Long userId, NewEventDto newEventDto);
+
     Collection<EventShortDto> getEventByUserId(EventInitiatorIdFilter eventInitiatorIdFilter,
-                                                  Pageable pageable);
+                                               Pageable pageable);
+
     EventFullDto getEventFullDescription(Long userId, Long eventId);
+
     EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventRequest updateEventRequest);
+
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventRequest);
+
     Page<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable);
 
-    Page<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable);
+    List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable);
 
     EventFullDto getEvent(Long eventId);
 }

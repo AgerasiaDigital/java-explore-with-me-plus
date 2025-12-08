@@ -3,7 +3,7 @@ package ru.practicum.ewm.dto.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.practicum.ewm.model.category.Category;
@@ -12,9 +12,11 @@ import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.event.StateAction;
 
-@Data // TODO оставить 1 DTO
-public class UpdateEventUserRequest { // TODO: patch-поведение
-    @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+import java.time.LocalDateTime;
+
+@Data
+public class UpdateEventRequest {
+    // @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     @Size(min = 20)
     @Size(max = 2000)
     private String annotation;
@@ -23,11 +25,12 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
 
     @Size(min = 20)
     @Size(max = 7000)
-    @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+    // TODO возможно надо убрать
+    // @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     private String description;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String eventDate;
+    private LocalDateTime eventDate;
 
     @Valid
     @JsonProperty("location")
@@ -35,6 +38,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
 
     private Boolean paid;
 
+    @Min(0)
     private Integer participantLimit;
 
     private Boolean requestModeration;
@@ -43,7 +47,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
 
     @Size(min = 3)
     @Size(max = 120)
-    @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+    //  @Pattern(regexp = "^(?!\\s*$).+") // допускает null
     private String title;
 
     public boolean hasAnnotation() {
@@ -58,7 +62,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
         return description != null;
     }
 
-    public boolean hasLocation() {
+    public boolean hasLocationDto() {
         return locationDto != null;
     }
 
@@ -99,7 +103,7 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
             event.setCategory(category);
         }
 
-        if (hasLocation()) {
+        if (hasLocationDto()) {
             event.setLocation(location);
         }
 
@@ -119,4 +123,5 @@ public class UpdateEventUserRequest { // TODO: patch-поведение
             event.setState(eventState);
         }
     }
+
 }
