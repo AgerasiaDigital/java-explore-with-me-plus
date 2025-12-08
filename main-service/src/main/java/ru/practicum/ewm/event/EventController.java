@@ -72,15 +72,29 @@ public class EventController {
                                              @PathVariable Long eventId,
                                              @Valid @RequestBody UpdateEventRequest updateEventRequest) {
         log.info("Запрос на редактирование события пользователем, userId={}, eventId={}", userId, eventId);
+        log.debug("{}", updateEventRequest);
         EventFullDto eventFullDto = eventService.updateEventByCreator(userId, eventId, updateEventRequest);
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
     }
 
+    // Получение информации о участии текущего пользователя в событиях
+//    @GetMapping("/users/{userId}/events/{eventId}/requests")
+//    public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable Long userId,
+//                                                @PathVariable Long eventId) {
+//        log.info("Запрос участия пользователя в событих, userId={}, eventId={}", userId, eventId);
+//        List<ParticipationRequestDto> participationRequestDto = eventService.getEventFullDescription(userId, eventId);
+//        log.debug("EVENTS: {}", participationRequestDto);
+//        return participationRequestDto;
+//    }
+
+
     @PatchMapping("/admin/events/{eventId}")
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
                                            @Valid @RequestBody UpdateEventRequest updateEventRequest) {
         log.info("Запрос на редактирование события админом, eventId={}", eventId);
+        log.debug("{}", updateEventRequest);
+
         EventFullDto eventFullDto = eventService.updateEventByAdmin(eventId, updateEventRequest);
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
@@ -97,15 +111,14 @@ public class EventController {
 
     // Публичный поиск событий
     @GetMapping("/events")
-    public List<EventFullDto> getEvents(EventPublicFilter eventPublicFilter,
+    public List<EventFullDto> getEvents(@Valid EventPublicFilter eventPublicFilter,
                                         PageRequestDto pageRequestDto,
                                         HttpServletRequest request) {
         log.info("Публичный запрос событий с параметрами: {}", eventPublicFilter);
         log.debug("Параметры запроса: {}", eventPublicFilter);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
-        Page<EventFullDto> page = eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
-        return page.getContent();
+        return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
     }
 
     // Публичный запрос подробной информации по событию

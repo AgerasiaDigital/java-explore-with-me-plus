@@ -9,7 +9,6 @@ public class OffsetBasedPageRequest implements Pageable {
     private final int offset;
     private final Sort sort;
 
-    //TODO заменить исключение на 400 - BAD_REQUEST?
     public OffsetBasedPageRequest(int offset, int limit, Sort sort) {
         if (offset < 0) throw new IllegalArgumentException("Смещение должно быть больше 0");
         if (limit < 1) throw new IllegalArgumentException("Количество элементов в наборе должно быть больше 1");
