@@ -85,7 +85,7 @@ public class EventController {
     public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable Long userId,
                                                                      @PathVariable Long eventId) {
         log.info("Запрос участия пользователя в событиях, userId={}, eventId={}", userId, eventId);
-        List<ParticipationRequestDto> participationRequestDto = eventService.checkUserEventParticipation(userId, eventId);
+        List<ParticipationRequestDto> participationRequestDto = requestService.getEventParticipants(userId, eventId);
         log.debug("EVENTS: {}", participationRequestDto);
         return participationRequestDto;
     }
