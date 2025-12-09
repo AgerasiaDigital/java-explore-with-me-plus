@@ -1,6 +1,7 @@
 package ru.practicum.ewm.dto.event;
 
 import lombok.Data;
+import ru.practicum.ewm.model.request.RequestUpdateAction;
 
 import java.util.List;
 
@@ -8,5 +9,5 @@ import java.util.List;
 public class EventRequestStatusUpdateRequest {
     private List<Long> requestIds;
 
-    private String status; // TODO: enum [ CONFIRMED, REJECTED ]
+    private RequestUpdateAction status;
 }

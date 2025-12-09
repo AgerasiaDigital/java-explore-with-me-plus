@@ -159,7 +159,7 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequestDto> confirmed = new ArrayList<>();
         List<ParticipationRequestDto> rejected = new ArrayList<>();
 
-        RequestStatus newStatus = RequestStatus.from(updateRequest.getStatus())
+        RequestStatus newStatus = RequestStatus.from(updateRequest.getStatus().toString())
                 .orElseThrow(() -> new ValidationException("Invalid status"));
 
         if (newStatus.equals(RequestStatus.CONFIRMED)) {

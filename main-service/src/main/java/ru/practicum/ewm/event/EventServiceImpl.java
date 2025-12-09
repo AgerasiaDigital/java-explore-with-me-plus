@@ -1,5 +1,6 @@
 package ru.practicum.ewm.event;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -7,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
@@ -21,6 +24,7 @@ import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.request.Request;
+import ru.practicum.ewm.model.request.RequestStatus;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.RequestRepository;
@@ -189,6 +193,48 @@ public class EventServiceImpl implements EventService {
                 .toList();
     }
 
+    // Изменение статуса (подтверждена, отклонена) заявок на участие в событии текущего пользователя
+    public EventRequestStatusUpdateResult changeStatusRequest(@PathVariable Long userId,
+                                                              @PathVariable Long eventId,
+                                                              @Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+        EventRequestStatusUpdateResult eventRequestStatusUpdateResult = new EventRequestStatusUpdateResult();
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+        if (!Objects.equals(event.getInitiator().getId(), userId)) {
+            throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
+                    "eventId=%s", userId, eventId));
+        }
+        List<Request> requestList = requestRepository.findAllByIdInOrderByCreated(eventRequestStatusUpdateRequest.getRequestIds());
+        RuntimeException ex = null;
+        for (Request request : requestList) {
+            //статус можно изменить только у заявок, находящихся в состоянии ожидания (Ожидается код ошибки 409)
+            if (request.getStatus() != RequestStatus.PENDING) {
+                ex = new ValidationException("Request must have status PENDING");
+            }
+            //нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие (Ожидается код ошибки 409)
+            //если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить
+            Long confirmedRequest = getRequestCount(event);
+            if (confirmedRequest <= event.getParticipantLimit()) {
+                switch (eventRequestStatusUpdateRequest.getStatus()) {
+                    case CONFIRMED -> request.setStatus(RequestStatus.CONFIRMED);
+                    case REJECTED -> request.setStatus(RequestStatus.REJECTED);
+                    default -> throw new ValidationException(
+                            "Unexpected status: " + eventRequestStatusUpdateRequest.getStatus()
+                    );
+                }
+                eventRequestStatusUpdateResult.getConfirmedRequests().add(RequestMapper.toDto(request));
+            } else {
+                request.setStatus(RequestStatus.CANCELED);
+                eventRequestStatusUpdateResult.getRejectedRequests().add(RequestMapper.toDto(request));
+                ex = (ex == null) ? new ConflictException("The participant limit has been reached") : ex;
+            }
+            requestRepository.save(request);
+        }
+        if (ex != null) throw ex;
+        return eventRequestStatusUpdateResult;
+    }
 
     //TODO вынести 1час - в настройки приложения
     @Transactional

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.client.StatClient;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.ewm.dto.event.*;
+import ru.practicum.ewm.service.RequestService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ import java.util.List;
 public class EventController {
     private final EventService eventService;
     private final StatClient statClient;
+    private final RequestService requestService;
 
     private void saveHit(HttpServletRequest request) {
         statClient.hit(new EndpointHitDto(
@@ -86,6 +88,19 @@ public class EventController {
         List<ParticipationRequestDto> participationRequestDto = eventService.checkUserEventParticipation(userId, eventId);
         log.debug("EVENTS: {}", participationRequestDto);
         return participationRequestDto;
+    }
+
+    // Изменение статуса (подтверждена, отклонена) заявок на участие в событии текущего пользователя
+    @PatchMapping("/users/{userId}/events/{eventId}/requests")
+    public EventRequestStatusUpdateResult changeStatusRequest(@PathVariable Long userId,
+                                                              @PathVariable Long eventId,
+                                                              @Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+        log.info("Запрос на изменение статуса заявок на участии в событии eventId={}, пользователь userId={}", eventId, userId);
+        EventRequestStatusUpdateResult eventRequestStatusUpdateResult = requestService.changeRequestStatus(userId,
+                eventId,
+                eventRequestStatusUpdateRequest);
+        log.debug("EVENTS: {}", eventRequestStatusUpdateResult);
+        return eventRequestStatusUpdateResult;
     }
 
 
