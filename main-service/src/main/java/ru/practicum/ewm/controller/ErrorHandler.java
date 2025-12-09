@@ -5,6 +5,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -136,6 +137,44 @@ public class ErrorHandler {
                 e.getMessage(),
                 "Unexpected error",
                 HttpStatus.INTERNAL_SERVER_ERROR.name(),
+                LocalDateTime.now().format(formatter));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleIllegalStateException(final IllegalStateException e) {
+        log.warn("409 {}", e.getMessage(), e);
+
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+        e.printStackTrace(printWriter);
+
+        String stackTrace = stringWriter.toString();
+
+        return new ApiError(stackTrace,
+                e.getMessage(),
+                "Conflict",
+                HttpStatus.CONFLICT.name(),
+                LocalDateTime.now().format(formatter));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMissingServletRequestParameterException(final MissingServletRequestParameterException e) {
+        log.warn("400 {}", e.getMessage(), e);
+
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+
+        e.printStackTrace(printWriter);
+
+        String stackTrace = stringWriter.toString();
+
+        return new ApiError(stackTrace,
+                e.getMessage(),
+                "Missing required params",
+                HttpStatus.BAD_REQUEST.name(),
                 LocalDateTime.now().format(formatter));
     }
 

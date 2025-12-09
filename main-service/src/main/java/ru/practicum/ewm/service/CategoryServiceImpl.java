@@ -76,11 +76,11 @@ public class CategoryServiceImpl implements CategoryService {
         // TODO: можно заменить на попытку записи и отлов DataIntegrityViolationException
         categoryRepository.findByName(request.getName())
                 .ifPresent(foundCategory -> {
-            if (!foundCategory.getId().equals(categoryId)) {
-                log.warn("Category with name = {} already exists", request.getName());
-                throw new ConflictException(String.format("Category with name = %s already exists", request.getName()));
-            }
-        });
+                    if (!foundCategory.getId().equals(categoryId)) {
+                        log.warn("Category with name = {} already exists", request.getName());
+                        throw new ConflictException(String.format("Category with name = %s already exists", request.getName()));
+                    }
+                });
 
         CategoryMapper.updateFields(category, request);
         categoryRepository.save(category);

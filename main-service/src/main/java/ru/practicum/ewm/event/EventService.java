@@ -1,11 +1,7 @@
 package ru.practicum.ewm.event;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import ru.practicum.ewm.dto.event.EventFullDto;
-import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.event.UpdateEventRequest;
+import ru.practicum.ewm.dto.event.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -22,9 +18,14 @@ public interface EventService {
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventRequest);
 
-    Page<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable);
+    List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable);
 
     List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable);
+
+    List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId);
+
+    EventRequestStatusUpdateResult changeStatusRequest(Long userId, Long eventId,
+                                                       EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest);
 
     EventFullDto getEvent(Long eventId);
 }

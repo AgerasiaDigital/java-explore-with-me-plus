@@ -16,6 +16,7 @@ import ru.practicum.ewm.model.user.User;
 @Mapper(componentModel = "spring")
 public interface EventMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "initiator", source = "user")
     @Mapping(target = "location", source = "newEventDto.location")
     @Mapping(target = "createdOn", ignore = true)
