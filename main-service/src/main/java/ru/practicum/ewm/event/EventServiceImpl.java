@@ -10,17 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatClient;
 import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
-import ru.practicum.ewm.dto.event.EventFullDto;
-import ru.practicum.ewm.dto.event.EventShortDto;
-import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.event.UpdateEventRequest;
+import ru.practicum.ewm.dto.event.*;
 import ru.practicum.ewm.exception.AccessViolationException;
+import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.mapper.RequestMapper;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
+import ru.practicum.ewm.model.request.Request;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.RequestRepository;
@@ -51,6 +51,11 @@ public class EventServiceImpl implements EventService {
     }
     //TODO убрать костыль указания временного диапазона
 
+    private long getViewCount(Event event) {
+        Map<Long, Long> map = getViews(List.of(event));
+        return map.getOrDefault(event.getId(), 0L);
+    }
+
     private Map<Long, Long> getViews(List<Event> events) {
         List<String> uriList = events.stream()
                 .map(e -> "/events/" + e.getId())
@@ -69,8 +74,20 @@ public class EventServiceImpl implements EventService {
                 ));
     }
 
-    private Long getRequests(Long eventId) {
-        return 10L;
+    private long getRequestCount(Event event) {
+        Map<Long, Long> map = getRequests(List.of(event));
+        return map.getOrDefault(event.getId(), 0L);
+    }
+
+    private Map<Long, Long> getRequests(List<Event> events) {
+        List<Object[]> raw = requestRepository.countConfirmedRequestsByEventIds(
+                events.stream().map(Event::getId).toList()
+        );
+        return raw.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],   // eventId
+                        row -> (Long) row[1]    // count
+                ));
     }
 
     //TODO добавить категории
@@ -83,7 +100,7 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Дата события должна быть минимум через 2 часа");
         }
         Event savedEvent = eventRepository.save(eventMapper.toEvent(newEventDto, user));
-        return eventMapper.toFullDto(savedEvent, getRequests(savedEvent.getId()), getViews(List.of(savedEvent)).get(savedEvent.getId()));
+        return eventMapper.toFullDto(savedEvent, getRequestCount(savedEvent), getViewCount(savedEvent));
     }
 
     @Transactional(readOnly = true)
@@ -113,7 +130,7 @@ public class EventServiceImpl implements EventService {
             throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
                     "eventId=%s", userId, eventId));
         }
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
+        return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
     //TODO вынести 2 часа - в настройки приложения
@@ -122,7 +139,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
-            throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
+            throw new ConflictException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 2 час до начала");
@@ -156,19 +173,21 @@ public class EventServiceImpl implements EventService {
         }
         updateEventRequest.applyTo(event, category, newLocation, newState);
         eventRepository.save(event);
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
+        return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
-//    public List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId) {
-//        Event event = eventRepository.findById(eventId)
-//                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
-//
-//        List<Request> requests = requestRepository.(updateRequest.getRequestIds(), eventId);
-//
-//        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
-//    }
+    // получение информации о запросах на участие в событии текущего пользователя
+    public List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+
+        List<Request> requests = requestRepository.findByEventIdAndRequesterId(eventId, userId);
+        return requests.stream()
+                .map(RequestMapper::toDto)
+                .toList();
+    }
 
 
     //TODO вынести 1час - в настройки приложения
@@ -178,7 +197,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
 
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
-            throw new ValidationException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
+            throw new ConflictException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
         }
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(1))) {
             throw new ValidationException("Разрешается редактировать события не позже, чем за 1 час до начала");
@@ -205,39 +224,42 @@ public class EventServiceImpl implements EventService {
 
         updateEventRequest.applyTo(event, category, newLocation, newState);
         Event savedEvent = eventRepository.save(event);
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(savedEvent)).get(savedEvent.getId()));
+        return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
     @Transactional(readOnly = true)
-    public Page<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable) {
+    public List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable) {
         Specification<Event> spec = EventSpecification.withAdminFilter(eventAdminFilter);
-        Page<Event> events = eventRepository.findAll(spec, pageable);
+        List<Event> events = eventRepository.findAll(spec, pageable).getContent();
 
-        // Map<Long, Long> requests = requestService.getRequests(events);
-        Map<Long, Long> viewsMap = getViews(events.getContent());
+        Map<Long, Long> requestsMap = getRequests(events);
+        log.debug("requestsMap: {}", requestsMap);
+        Map<Long, Long> viewsMap = getViews(events);
 
-        return events.map(event ->
-                eventMapper.toFullDto(event,
-                        10L,
-                        viewsMap.getOrDefault(event.getId(), 0L))
-        );
+        return events.stream()
+                .map(event -> eventMapper.toFullDto(
+                        event,
+                        requestsMap.getOrDefault(event.getId(), 0L),
+                        viewsMap.getOrDefault(event.getId(), 0L)
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable) {
         Specification<Event> spec = EventSpecification.withPublicFilter(eventPublicFilter);
-        Page<Event> events = eventRepository.findAll(spec, pageable);
+        List<Event> events = eventRepository.findAll(spec, pageable).getContent();
 
         if (events.isEmpty()) {
-            return List.of(); // или Collections.emptyList()
+            return List.of();
         }
-        //Map<Long, Long> requests = requestService.getRequests(events);
-        Map<Long, Long> viewsMap = getViews(events.getContent());
+        Map<Long, Long> requestsMap = getRequests(events);
+        Map<Long, Long> viewsMap = getViews(events);
 
-        return events.getContent().stream()
+        return events.stream()
                 .map(event -> eventMapper.toFullDto(
                         event,
-                        10L,
+                        requestsMap.getOrDefault(event.getId(), 0L),
                         viewsMap.getOrDefault(event.getId(), 0L)
                 ))
                 .toList();
@@ -247,6 +269,6 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getEvent(Long eventId) {
         Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
-        return eventMapper.toFullDto(event, getRequests(eventId), getViews(List.of(event)).get(eventId));
+        return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 }

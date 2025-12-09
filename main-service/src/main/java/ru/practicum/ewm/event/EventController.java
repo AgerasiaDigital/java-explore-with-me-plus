@@ -4,13 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.client.StatClient;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.ewm.dto.event.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +37,7 @@ public class EventController {
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId,
-                               @Valid @RequestBody NewEventDto newEventDto) {
+                               @Valid @RequestBody NewEventDto newEventDto, HttpServletRequest request) throws IOException {
         log.info("Запрос на создание события, userId={}", userId);
         log.debug("newEventDto: {}", newEventDto);
         return eventService.create(userId, newEventDto);
@@ -79,14 +79,14 @@ public class EventController {
     }
 
     // Получение информации о участии текущего пользователя в событиях
-//    @GetMapping("/users/{userId}/events/{eventId}/requests")
-//    public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable Long userId,
-//                                                @PathVariable Long eventId) {
-//        log.info("Запрос участия пользователя в событих, userId={}, eventId={}", userId, eventId);
-//        List<ParticipationRequestDto> participationRequestDto = eventService.getEventFullDescription(userId, eventId);
-//        log.debug("EVENTS: {}", participationRequestDto);
-//        return participationRequestDto;
-//    }
+    @GetMapping("/users/{userId}/events/{eventId}/requests")
+    public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable Long userId,
+                                                                     @PathVariable Long eventId) {
+        log.info("Запрос участия пользователя в событиях, userId={}, eventId={}", userId, eventId);
+        List<ParticipationRequestDto> participationRequestDto = eventService.checkUserEventParticipation(userId, eventId);
+        log.debug("EVENTS: {}", participationRequestDto);
+        return participationRequestDto;
+    }
 
 
     @PatchMapping("/admin/events/{eventId}")
@@ -105,8 +105,7 @@ public class EventController {
     public List<EventFullDto> getEventsAdmin(EventAdminFilter eventAdminFilter,
                                              PageRequestDto pageRequestDto) {
         log.debug("Админский запрос событий с параметрами: {}", eventAdminFilter);
-        Page<EventFullDto> page = eventService.adminSearchEvents(eventAdminFilter, pageRequestDto.toPageable());
-        return page.getContent();
+        return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto.toPageable());
     }
 
     // Публичный поиск событий
