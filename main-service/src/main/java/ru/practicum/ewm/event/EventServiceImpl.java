@@ -31,7 +31,6 @@ import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,6 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 public class EventServiceImpl implements EventService {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
@@ -55,22 +53,35 @@ public class EventServiceImpl implements EventService {
             return Map.of();
         }
 
+        // Небольшая задержка для синхронизации со stat-service
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         List<String> uriList = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .toList();
 
         StatsParamDto statsParamDto = new StatsParamDto();
-        statsParamDto.setStart(LocalDateTime.now().minusYears(100));
-        statsParamDto.setEnd(LocalDateTime.now().plusYears(100));
+        // Используем более узкий временной диапазон
+        statsParamDto.setStart(LocalDateTime.now().minusHours(1));
+        statsParamDto.setEnd(LocalDateTime.now().plusHours(1));
         statsParamDto.setUris(uriList);
         statsParamDto.setIsUnique(false);
 
-        List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
-        return viewStatsDtoList.stream()
-                .collect(Collectors.toMap(
-                        dto -> Long.parseLong(dto.getUri().substring(dto.getUri().lastIndexOf('/') + 1)),
-                        ViewStatsDto::getHits
-                ));
+        try {
+            List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
+            return viewStatsDtoList.stream()
+                    .collect(Collectors.toMap(
+                            dto -> Long.parseLong(dto.getUri().substring(dto.getUri().lastIndexOf('/') + 1)),
+                            ViewStatsDto::getHits
+                    ));
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики просмотров: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     private long getViewCount(Event event) {
