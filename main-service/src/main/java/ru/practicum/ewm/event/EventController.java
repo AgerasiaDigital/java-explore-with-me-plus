@@ -19,8 +19,6 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 @RestController
-
-
 public class EventController {
     private final EventService eventService;
     private final StatClient statClient;
@@ -35,7 +33,6 @@ public class EventController {
         ));
     }
 
-    // Создание события пользователем
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId,
@@ -45,7 +42,6 @@ public class EventController {
         return eventService.create(userId, newEventDto);
     }
 
-    // Получение всех событий созданных пользователем, без подробностей
     @GetMapping("/users/{userId}/events")
     public Collection<EventShortDto> getEventsOfUser(@PathVariable Long userId,
                                                      EventInitiatorIdFilter eventInitiatorIdFilter,
@@ -58,7 +54,6 @@ public class EventController {
         return events;
     }
 
-    // Получение подробного описания события созданного пользователем
     @GetMapping("/users/{userId}/events/{eventId}")
     public EventFullDto getEventFullDescription(@PathVariable Long userId,
                                                 @PathVariable Long eventId) {
@@ -68,7 +63,6 @@ public class EventController {
         return eventFullDto;
     }
 
-    // Редактирование события созданного пользователем
     @PatchMapping("/users/{userId}/events/{eventId}")
     public EventFullDto updateEventByCreator(@PathVariable Long userId,
                                              @PathVariable Long eventId,
@@ -80,7 +74,6 @@ public class EventController {
         return eventFullDto;
     }
 
-    // Получение информации о участии текущего пользователя в событиях
     @GetMapping("/users/{userId}/events/{eventId}/requests")
     public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable Long userId,
                                                                      @PathVariable Long eventId) {
@@ -90,7 +83,6 @@ public class EventController {
         return participationRequestDto;
     }
 
-    // Изменение статуса (подтверждена, отклонена) заявок на участие в событии текущего пользователя
     @PatchMapping("/users/{userId}/events/{eventId}/requests")
     public EventRequestStatusUpdateResult changeStatusRequest(@PathVariable Long userId,
                                                               @PathVariable Long eventId,
@@ -103,7 +95,6 @@ public class EventController {
         return eventRequestStatusUpdateResult;
     }
 
-
     @PatchMapping("/admin/events/{eventId}")
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
                                            @Valid @RequestBody UpdateEventRequest updateEventRequest) {
@@ -115,7 +106,6 @@ public class EventController {
         return eventFullDto;
     }
 
-    // Админский запрос событий
     @GetMapping("/admin/events")
     public List<EventFullDto> getEventsAdmin(EventAdminFilter eventAdminFilter,
                                              PageRequestDto pageRequestDto) {
@@ -123,7 +113,6 @@ public class EventController {
         return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto.toPageable());
     }
 
-    // Публичный поиск событий
     @GetMapping("/events")
     public List<EventFullDto> getEvents(@Valid EventPublicFilter eventPublicFilter,
                                         PageRequestDto pageRequestDto,
@@ -132,16 +121,25 @@ public class EventController {
         log.debug("Параметры запроса: {}", eventPublicFilter);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
     }
 
-    // Публичный запрос подробной информации по событию
     @GetMapping("/events/{eventId}")
     public EventFullDto getEvent(@PathVariable Long eventId,
                                  HttpServletRequest request) {
         log.info("Публичный запрос подробной информации по событию с id: {}", eventId);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         return eventService.getEvent(eventId);
     }
 }

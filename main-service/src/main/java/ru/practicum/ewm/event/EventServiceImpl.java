@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
             return Map.of();
         }
 
-        // Небольшая задержка для синхронизации со stat-service
+        // Небольшая задержка для синхронизации со stat-service (Олежа не забудь)
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
@@ -65,7 +65,7 @@ public class EventServiceImpl implements EventService {
                 .toList();
 
         StatsParamDto statsParamDto = new StatsParamDto();
-        // Используем более узкий временной диапазон
+        // Используем более узкий временной диапазон (не забыть)
         statsParamDto.setStart(LocalDateTime.now().minusHours(1));
         statsParamDto.setEnd(LocalDateTime.now().plusHours(1));
         statsParamDto.setUris(uriList);
