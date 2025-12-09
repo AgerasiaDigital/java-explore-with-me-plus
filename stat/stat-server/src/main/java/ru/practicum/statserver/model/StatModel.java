@@ -1,10 +1,7 @@
 package ru.practicum.statserver.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -14,16 +11,21 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 @AllArgsConstructor
+@NoArgsConstructor
 public class StatModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "app")
     private String app;
+
     @Column(name = "uri")
     private String uri;
+
     @Column(name = "ip")
     private String ip;
+
     @Column(name = "timestamp")
     private LocalDateTime timestamp;
 }
