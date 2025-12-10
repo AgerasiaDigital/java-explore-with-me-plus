@@ -69,7 +69,7 @@ public class EventServiceImpl implements EventService {
         statsParamDto.setStart(LocalDateTime.now().minusHours(1));
         statsParamDto.setEnd(LocalDateTime.now().plusHours(1));
         statsParamDto.setUris(uriList);
-        statsParamDto.setIsUnique(false);
+        statsParamDto.setIsUnique(true);
 
         try {
             List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
