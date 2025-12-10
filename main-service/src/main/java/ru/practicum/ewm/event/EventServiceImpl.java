@@ -249,11 +249,16 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Запрещено редактировать прошедшие события");
         }
 
-        EventState newState = event.getState();
+        EventState state = event.getState();
         if (updateEventRequest.getStateAction() != null) {
-            newState =
-                    StateTransitionValidator.changeState(event.getState(), updateEventRequest.getStateAction(), true);
+            state = StateTransitionValidator.changeState(event.getState(), updateEventRequest.getStateAction(), true);
         }
+
+        if (event.getState() == EventState.PENDING &&  // <-- старое состояние
+                state == EventState.PUBLISHED) {       // <-- новое состояние
+            event.setPublishedOn(LocalDateTime.now());
+        }
+
         Category category = null;
         if (updateEventRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventRequest.getCategory())
@@ -265,8 +270,8 @@ public class EventServiceImpl implements EventService {
             newLocation = eventMapper.toLocation(updateEventRequest.getLocationDto());
         }
 
-        updateEventRequest.applyTo(event, category, newLocation, newState);
-        Event savedEvent = eventRepository.save(event);
+        updateEventRequest.applyTo(event, category, newLocation, state);
+        eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
