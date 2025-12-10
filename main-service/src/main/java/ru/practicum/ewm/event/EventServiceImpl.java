@@ -32,10 +32,7 @@ import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -274,7 +271,8 @@ public class EventServiceImpl implements EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable) {
+    public List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, PageRequestDto pageRequestDto) {
+        Pageable pageable = pageRequestDto.toPageable();
         Specification<Event> spec = EventSpecification.withAdminFilter(eventAdminFilter);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
 
@@ -292,15 +290,31 @@ public class EventServiceImpl implements EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable) {
+    public List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto) {
+
+        Pageable pageable = pageRequestDto.toPageable();
+        EventSort sort = pageRequestDto.getSort();
+
+        boolean sorByDate = sort == EventSort.EVENT_DATE;
+        boolean sortByViews = sort == EventSort.VIEWS;
+        boolean noSort = sort == null;
+
         Specification<Event> spec = EventSpecification.withPublicFilter(eventPublicFilter);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
 
         if (events.isEmpty()) {
             return List.of();
         }
+
         Map<Long, Long> requestsMap = getRequests(events);
         Map<Long, Long> viewsMap = getViews(events);
+
+        if (sortByViews) {
+            events = events.stream()
+                    .sorted(Comparator.comparingLong(
+                            e -> viewsMap.getOrDefault(e.getId(), 0L)))
+                    .toList().reversed();
+        }
 
         return events.stream()
                 .map(event -> eventMapper.toFullDto(

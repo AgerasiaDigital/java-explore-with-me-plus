@@ -18,9 +18,9 @@ public interface EventService {
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventRequest);
 
-    List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable);
+    List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, PageRequestDto pageRequestDto);
 
-    List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable);
+    List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto);
 
     List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId);
 

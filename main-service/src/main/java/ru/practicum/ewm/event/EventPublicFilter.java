@@ -21,6 +21,7 @@ public class EventPublicFilter {
     private LocalDateTime rangeEnd;
     private Boolean onlyAvailable;
     private Boolean paid;
+    private List<String> eventState = List.of("PUBLISHED");
 
     public List<Long> getCategory() {
         return categories;

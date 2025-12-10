@@ -19,6 +19,7 @@ public class EventSpecification {
                 .and(categories(f.getCategories()))
                 .and(eventDateAfter(f.getRangeStart()))
                 .and(eventDateBefore(f.getRangeEnd()))
+                .and(states(f.getEventState()))
                 .and(eventDateInFutureIfNoRange(f.getRangeStart(), f.getRangeEnd()));
     }
 

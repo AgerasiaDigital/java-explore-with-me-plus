@@ -120,7 +120,7 @@ public class EventController {
     public List<EventFullDto> getEventsAdmin(EventAdminFilter eventAdminFilter,
                                              PageRequestDto pageRequestDto) {
         log.debug("Админский запрос событий с параметрами: {}", eventAdminFilter);
-        return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto.toPageable());
+        return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto);
     }
 
     // Публичный поиск событий
@@ -132,7 +132,7 @@ public class EventController {
         log.debug("Параметры запроса: {}", eventPublicFilter);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
-        return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
+        return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto);
     }
 
     // Публичный запрос подробной информации по событию
