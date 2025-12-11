@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 public class EventServiceImpl implements EventService {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
@@ -47,32 +46,45 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final RequestRepository requestRepository;
 
-    private Long extractId(String uri) {
-        return Long.parseLong(uri.substring(uri.lastIndexOf('/') + 1));
-    }
-    //TODO убрать костыль указания временного диапазона
-
-    private long getViewCount(Event event) {
-        Map<Long, Long> map = getViews(List.of(event));
-        return map.getOrDefault(event.getId(), 0L);
-    }
-
     private Map<Long, Long> getViews(List<Event> events) {
+        if (events == null || events.isEmpty()) {
+            return Map.of();
+        }
+
+        // Небольшая задержка для синхронизации со stat-service (Олежа не забудь)
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
         List<String> uriList = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .toList();
 
         StatsParamDto statsParamDto = new StatsParamDto();
-        statsParamDto.setStart(LocalDateTime.now().minusYears(10));
-        statsParamDto.setEnd(LocalDateTime.now().plusYears(10));
+        // Используем более узкий временной диапазон (не забыть)
+        statsParamDto.setStart(LocalDateTime.now().minusHours(1));
+        statsParamDto.setEnd(LocalDateTime.now().plusHours(1));
         statsParamDto.setUris(uriList);
+        statsParamDto.setIsUnique(true);
 
-        List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
-        return viewStatsDtoList.stream()
-                .collect(Collectors.toMap(
-                        dto -> Long.parseLong(dto.getUri().substring(dto.getUri().lastIndexOf('/') + 1)),
-                        ViewStatsDto::getHits
-                ));
+        try {
+            List<ViewStatsDto> viewStatsDtoList = statClient.getStats(statsParamDto);
+            return viewStatsDtoList.stream()
+                    .collect(Collectors.toMap(
+                            dto -> Long.parseLong(dto.getUri().substring(dto.getUri().lastIndexOf('/') + 1)),
+                            ViewStatsDto::getHits
+                    ));
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики просмотров: {}", e.getMessage());
+            return Map.of();
+        }
+    }
+
+    private long getViewCount(Event event) {
+        Map<Long, Long> map = getViews(List.of(event));
+        return map.getOrDefault(event.getId(), 0L);
     }
 
     private long getRequestCount(Event event) {
@@ -81,13 +93,17 @@ public class EventServiceImpl implements EventService {
     }
 
     private Map<Long, Long> getRequests(List<Event> events) {
+        if (events == null || events.isEmpty()) {
+            return Map.of();
+        }
+
         List<Object[]> raw = requestRepository.countConfirmedRequestsByEventIds(
                 events.stream().map(Event::getId).toList()
         );
         return raw.stream()
                 .collect(Collectors.toMap(
-                        row -> (Long) row[0],   // eventId
-                        row -> (Long) row[1]    // count
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
                 ));
     }
 
@@ -127,11 +143,12 @@ public class EventServiceImpl implements EventService {
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
         Map<Long, Long> viewsMap = getViews(events.getContent());
+        Map<Long, Long> requestsMap = getRequests(events.getContent());
 
         return events.getContent().stream()
                 .map(event -> eventMapper.toShortDto(
                         event,
-                        10L, // confirmedRequests пример
+                        requestsMap.getOrDefault(event.getId(), 0L),
                         viewsMap.getOrDefault(event.getId(), 0L)
                 ))
                 .toList();
@@ -150,7 +167,6 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
-    //TODO вынести 2 часа - в настройки приложения
     @Transactional
     public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId)
@@ -171,7 +187,6 @@ public class EventServiceImpl implements EventService {
                     "eventId=%s", userId, eventId));
         }
 
-        // Проверка перехода статуса
         EventState newState = event.getState();
         if (updateEventRequest.getStateAction() != null) {
             newState =
@@ -193,7 +208,6 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
-    // получение информации о запросах на участие в событии текущего пользователя
     public List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
@@ -206,7 +220,6 @@ public class EventServiceImpl implements EventService {
                 .toList();
     }
 
-    // Изменение статуса (подтверждена, отклонена) заявок на участие в событии текущего пользователя
     public EventRequestStatusUpdateResult changeStatusRequest(@PathVariable Long userId,
                                                               @PathVariable Long eventId,
                                                               @Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
@@ -222,14 +235,11 @@ public class EventServiceImpl implements EventService {
         List<Request> requestList = requestRepository.findAllByIdInOrderByCreated(eventRequestStatusUpdateRequest.getRequestIds());
         RuntimeException ex = null;
         for (Request request : requestList) {
-            //статус можно изменить только у заявок, находящихся в состоянии ожидания (Ожидается код ошибки 409)
             if (request.getStatus() != RequestStatus.PENDING) {
                 ex = new ValidationException("Request must have status PENDING");
             }
-            //нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие (Ожидается код ошибки 409)
-            //если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить
             Long confirmedRequest = getRequestCount(event);
-            if (confirmedRequest <= event.getParticipantLimit()) {
+            if (confirmedRequest < event.getParticipantLimit()) {
                 switch (eventRequestStatusUpdateRequest.getStatus()) {
                     case CONFIRMED -> request.setStatus(RequestStatus.CONFIRMED);
                     case REJECTED -> request.setStatus(RequestStatus.REJECTED);
@@ -249,7 +259,6 @@ public class EventServiceImpl implements EventService {
         return eventRequestStatusUpdateResult;
     }
 
-    //TODO вынести 1час - в настройки приложения
     @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId)
