@@ -31,10 +31,7 @@ import ru.practicum.ewm.repository.RequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -109,6 +106,24 @@ public class EventServiceImpl implements EventService {
                 ));
     }
 
+    private Map<Long, Boolean> checkAvailable(List<Event> events, Map<Long, Long> requestMap) {
+        Map<Long, Boolean> availableMap = new HashMap<>();
+        for (Event event : events) {
+            if (event.getParticipantLimit() > 0) {
+                if (requestMap.getOrDefault(event.getId(), 0L) < event.getParticipantLimit()) {
+                    availableMap.put(event.getId(), true);
+                } else {
+                    availableMap.put(event.getId(), false);
+                }
+            } else {
+                availableMap.put(event.getId(), true);
+            }
+        }
+        return availableMap;
+    }
+
+    //TODO добавить категории
+    //TODO добавить обработку валидации
     @Transactional
     public EventFullDto create(Long userId, NewEventDto newEventDto) {
         User user = userRepository.findById(userId)
@@ -258,11 +273,16 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Запрещено редактировать прошедшие события");
         }
 
-        EventState newState = event.getState();
+        EventState state = event.getState();
         if (updateEventRequest.getStateAction() != null) {
-            newState =
-                    StateTransitionValidator.changeState(event.getState(), updateEventRequest.getStateAction(), true);
+            state = StateTransitionValidator.changeState(event.getState(), updateEventRequest.getStateAction(), true);
         }
+
+        if (event.getState() == EventState.PENDING &&  // <-- старое состояние
+                state == EventState.PUBLISHED) {       // <-- новое состояние
+            event.setPublishedOn(LocalDateTime.now());
+        }
+
         Category category = null;
         if (updateEventRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventRequest.getCategory())
@@ -274,13 +294,14 @@ public class EventServiceImpl implements EventService {
             newLocation = eventMapper.toLocation(updateEventRequest.getLocationDto());
         }
 
-        updateEventRequest.applyTo(event, category, newLocation, newState);
-        Event savedEvent = eventRepository.save(event);
+        updateEventRequest.applyTo(event, category, newLocation, state);
+        eventRepository.save(event);
         return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 
     @Transactional(readOnly = true)
-    public List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, Pageable pageable) {
+    public List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, PageRequestDto pageRequestDto) {
+        Pageable pageable = pageRequestDto.toPageable();
         Specification<Event> spec = EventSpecification.withAdminFilter(eventAdminFilter);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
 
@@ -298,16 +319,36 @@ public class EventServiceImpl implements EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, Pageable pageable) {
+    public List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto) {
+
+        Pageable pageable = pageRequestDto.toPageable();
+        EventSort sort = pageRequestDto.getSort();
+
+        boolean sorByDate = sort == EventSort.EVENT_DATE;
+        boolean sortByViews = sort == EventSort.VIEWS;
+        boolean noSort = sort == null;
+
         Specification<Event> spec = EventSpecification.withPublicFilter(eventPublicFilter);
         List<Event> events = eventRepository.findAll(spec, pageable).getContent();
 
         if (events.isEmpty()) {
             return List.of();
         }
+
         Map<Long, Long> requestsMap = getRequests(events);
         Map<Long, Long> viewsMap = getViews(events);
+        Map<Long, Boolean> availableMap = checkAvailable(events, requestsMap);
 
+        if (eventPublicFilter.getOnlyAvailable() == true) {
+            events = events.stream()
+                    .filter(e -> availableMap.getOrDefault(e.getId(), false)).toList();
+        }
+        if (sortByViews) {
+            events = events.stream()
+                    .sorted(Comparator.comparingLong(
+                            e -> viewsMap.getOrDefault(e.getId(), 0L)))
+                    .toList().reversed();
+        }
         return events.stream()
                 .map(event -> eventMapper.toFullDto(
                         event,

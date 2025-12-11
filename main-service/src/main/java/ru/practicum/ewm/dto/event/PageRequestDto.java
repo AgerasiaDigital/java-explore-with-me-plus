@@ -9,15 +9,20 @@ import ru.practicum.ewm.event.OffsetBasedPageRequest;
 public class PageRequestDto {
     private Integer from = 0;
     private Integer size = 10;
-    private EventSort sort; // необязательно
+    private EventSort sort; // EVENT_DATE, VIEWS, null
 
     public Pageable toPageable() {
         int offset = (from == null) ? 0 : from;
         int limit = (size == null) ? 10 : size;
 
-        Sort sorting = sort == EventSort.EVENT_DATE
-                ? Sort.by("eventDate").ascending()
-                : Sort.unsorted();
+        Sort sorting;
+
+        if (sort == EventSort.EVENT_DATE) {
+            sorting = Sort.by("eventDate").ascending();
+        } else {
+            // Если сортировка VIEWS или sort отсутствует → сортировка в БД не нужна
+            sorting = Sort.unsorted();
+        }
 
         return new OffsetBasedPageRequest(offset, limit, sorting);
     }

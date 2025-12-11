@@ -19,10 +19,15 @@ public class EventPublicFilter {
     private LocalDateTime rangeStart;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime rangeEnd;
-    private Boolean onlyAvailable;
+    private Boolean onlyAvailable = false;
     private Boolean paid;
+    private List<String> eventState = List.of("PUBLISHED");
 
     public List<Long> getCategory() {
         return categories;
+    }
+
+    public Boolean getOnlyAvailable() {
+        return onlyAvailable;
     }
 }

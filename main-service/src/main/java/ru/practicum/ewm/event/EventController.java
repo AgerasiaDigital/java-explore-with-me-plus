@@ -110,7 +110,7 @@ public class EventController {
     public List<EventFullDto> getEventsAdmin(EventAdminFilter eventAdminFilter,
                                              PageRequestDto pageRequestDto) {
         log.debug("Админский запрос событий с параметрами: {}", eventAdminFilter);
-        return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto.toPageable());
+        return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto);
     }
 
     @GetMapping("/events")
@@ -121,12 +121,7 @@ public class EventController {
         log.debug("Параметры запроса: {}", eventPublicFilter);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto.toPageable());
+        return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto);
     }
 
     @GetMapping("/events/{eventId}")
