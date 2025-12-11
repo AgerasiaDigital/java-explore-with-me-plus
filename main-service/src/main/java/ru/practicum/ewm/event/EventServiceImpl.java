@@ -91,6 +91,22 @@ public class EventServiceImpl implements EventService {
                 ));
     }
 
+    private Map<Long, Boolean> checkAvailable(List<Event> events, Map<Long, Long> requestMap) {
+        Map<Long, Boolean> availableMap = new HashMap<>();
+        for (Event event : events) {
+            if (event.getParticipantLimit() > 0) {
+                if (requestMap.getOrDefault(event.getId(), 0L) < event.getParticipantLimit()) {
+                    availableMap.put(event.getId(), true);
+                } else {
+                    availableMap.put(event.getId(), false);
+                }
+            } else {
+                availableMap.put(event.getId(), true);
+            }
+        }
+        return availableMap;
+    }
+
     //TODO добавить категории
     //TODO добавить обработку валидации
     @Transactional
@@ -313,14 +329,18 @@ public class EventServiceImpl implements EventService {
 
         Map<Long, Long> requestsMap = getRequests(events);
         Map<Long, Long> viewsMap = getViews(events);
+        Map<Long, Boolean> availableMap = checkAvailable(events, requestsMap);
 
+        if (eventPublicFilter.getOnlyAvailable() == true) {
+            events = events.stream()
+                    .filter(e -> availableMap.getOrDefault(e.getId(), false)).toList();
+        }
         if (sortByViews) {
             events = events.stream()
                     .sorted(Comparator.comparingLong(
                             e -> viewsMap.getOrDefault(e.getId(), 0L)))
                     .toList().reversed();
         }
-
         return events.stream()
                 .map(event -> eventMapper.toFullDto(
                         event,
