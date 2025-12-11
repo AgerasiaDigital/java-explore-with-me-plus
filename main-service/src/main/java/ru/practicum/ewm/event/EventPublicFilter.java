@@ -14,7 +14,7 @@ import java.util.List;
 public class EventPublicFilter {
     private String text;
     @Valid
-    private List<@Positive(message = "categoryId должен быть > 0") Long> categories;
+    private List<@Positive(message = "categoryId must be > 0") Long> categories;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime rangeStart;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
