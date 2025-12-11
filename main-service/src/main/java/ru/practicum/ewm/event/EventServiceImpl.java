@@ -76,7 +76,7 @@ public class EventServiceImpl implements EventService {
                             ViewStatsDto::getHits
                     ));
         } catch (Exception e) {
-            log.error("Ошибка при получении статистики просмотров: {}", e.getMessage());
+            log.error("Error retrieving view statistics: {}", e.getMessage());
             return Map.of();
         }
     }
@@ -122,14 +122,12 @@ public class EventServiceImpl implements EventService {
         return availableMap;
     }
 
-    //TODO добавить категории
-    //TODO добавить обработку валидации
     @Transactional
     public EventFullDto create(Long userId, NewEventDto newEventDto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("User id=%s not found", userId)));
         if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ValidationException("Дата события должна быть минимум через 2 часа");
+            throw new ValidationException("The event date must be at least 2 hours from now");
         }
         Event savedEvent = eventRepository.save(eventMapper.toEvent(newEventDto, user));
         return eventMapper.toFullDto(savedEvent, getRequestCount(savedEvent), getViewCount(savedEvent));
@@ -156,11 +154,11 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public EventFullDto getEventFullDescription(Long userId, Long eventId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event id=%s not found", eventId)));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("User id=%s not found", userId)));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
-            throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
+            throw new AccessViolationException(String.format("Access denied! User userId=%s is not the creator of the event " +
                     "eventId=%s", userId, eventId));
         }
         return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
@@ -169,20 +167,20 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventFullDto updateEventByCreator(Long userId, Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event id=%s not found", eventId)));
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
-            throw new ConflictException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
+            throw new ConflictException("Events can only be edited when in Pending Moderation or Cancelled status");
         }
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(2))) {
-            throw new ValidationException("Разрешается редактировать события не позже, чем за 2 час до начала");
+            throw new ValidationException("Editing events is allowed no later than 2 hours before they start.");
         }
         if (updateEventRequest.getEventDate() != null && updateEventRequest.getEventDate().isBefore(LocalDateTime.now())) {
-            throw new ValidationException("Запрещено редактировать прошедшие события");
+            throw new ValidationException("Editing past events is prohibited");
         }
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("User id=%s not found", userId)));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
-            throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
+            throw new AccessViolationException(String.format("Access denied! User userId=%s is not the creator of the event " +
                     "eventId=%s", userId, eventId));
         }
 
@@ -195,7 +193,7 @@ public class EventServiceImpl implements EventService {
         Category category = null;
         if (updateEventRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventRequest.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+                    .orElseThrow(() -> new NotFoundException("Category not found"));
         }
 
         Location newLocation = null;
@@ -209,9 +207,9 @@ public class EventServiceImpl implements EventService {
 
     public List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event id=%s not found", eventId)));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("User id=%s not found", userId)));
 
         List<Request> requests = requestRepository.findByEventIdAndRequesterId(eventId, userId);
         return requests.stream()
@@ -224,11 +222,11 @@ public class EventServiceImpl implements EventService {
                                                               @Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
         EventRequestStatusUpdateResult eventRequestStatusUpdateResult = new EventRequestStatusUpdateResult();
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event id=%s not found", eventId)));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с id=%s не найден", userId)));
+                .orElseThrow(() -> new NotFoundException(String.format("User id=%s not found", userId)));
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
-            throw new AccessViolationException(String.format("Доступ ограничен! Пользователь userId=%s не является создателем события " +
+            throw new AccessViolationException(String.format("Access denied! User userId=%s is not the creator of the event " +
                     "eventId=%s", userId, eventId));
         }
         List<Request> requestList = requestRepository.findAllByIdInOrderByCreated(eventRequestStatusUpdateRequest.getRequestIds());
@@ -261,16 +259,16 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event id=%s not found", eventId)));
 
         if (event.getState() != EventState.PENDING && event.getState() != EventState.CANCELED) {
-            throw new ConflictException("Можно редактировать события только в состоянии Ожидания модерации и Отмены");
+            throw new ConflictException("Events can only be edited when in Pending Moderation or Cancelled state");
         }
         if (!event.getEventDate().isAfter(LocalDateTime.now().plusHours(1))) {
-            throw new ValidationException("Разрешается редактировать события не позже, чем за 1 час до начала");
+            throw new ValidationException("Editing events is allowed no later than 1 hour before they start");
         }
         if (updateEventRequest.getEventDate() != null && updateEventRequest.getEventDate().isBefore(LocalDateTime.now())) {
-            throw new ValidationException("Запрещено редактировать прошедшие события");
+            throw new ValidationException("Editing past events is prohibited");
         }
 
         EventState state = event.getState();
@@ -286,7 +284,7 @@ public class EventServiceImpl implements EventService {
         Category category = null;
         if (updateEventRequest.hasCategory()) {
             category = categoryRepository.findById(updateEventRequest.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Категория не найдена"));
+                    .orElseThrow(() -> new NotFoundException("Category not found"));
         }
 
         Location newLocation = null;
@@ -361,7 +359,7 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public EventFullDto getEvent(Long eventId) {
         Event event = eventRepository.findByIdAndState(eventId, EventState.PUBLISHED)
-                .orElseThrow(() -> new NotFoundException(String.format("Событие с id=%s не найдено", eventId)));
+                .orElseThrow(() -> new NotFoundException(String.format("Event id=%s not found", eventId)));
         return eventMapper.toFullDto(event, getRequestCount(event), getViewCount(event));
     }
 }

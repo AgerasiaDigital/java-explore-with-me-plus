@@ -10,8 +10,8 @@ public class OffsetBasedPageRequest implements Pageable {
     private final Sort sort;
 
     public OffsetBasedPageRequest(int offset, int limit, Sort sort) {
-        if (offset < 0) throw new IllegalArgumentException("Смещение должно быть больше 0");
-        if (limit < 1) throw new IllegalArgumentException("Количество элементов в наборе должно быть больше 1");
+        if (offset < 0) throw new IllegalArgumentException("The offset must be greater 0");
+        if (limit < 1) throw new IllegalArgumentException("The number of elements in the set must be greater 1");
 
         this.limit = limit;
         this.offset = offset;

@@ -12,28 +12,28 @@ public class StateTransitionValidator {
             case SEND_TO_REVIEW:
                 if (current == EventState.CANCELED || current == EventState.PENDING)
                     return EventState.PENDING;
-                throw new IllegalStateException("Нельзя отправить в ревью из состояния " + current);
+                throw new IllegalStateException("Cannot send to review from the state " + current);
 
             case CANCEL_REVIEW:
                 if (current == EventState.PENDING)
                     return EventState.CANCELED;
-                throw new IllegalStateException("Отмена допустима только из PENDING");
+                throw new IllegalStateException("Cancel is only allowed from PENDING");
 
             case PUBLISH_EVENT:
                 if (!isAdmin)
-                    throw new SecurityException("Публиковать может только администратор");
+                    throw new SecurityException("Only the administrator can publish");
                 if (current == EventState.PENDING)
                     return EventState.PUBLISHED;
-                throw new IllegalStateException("Публиковать можно только PENDING");
+                throw new IllegalStateException("Can only publish PENDING");
 
             case REJECT_EVENT:
                 if (!isAdmin)
-                    throw new SecurityException("Отклонять может только администратор");
+                    throw new SecurityException("Only an administrator can decline");
                 if (current == EventState.PENDING)
                     return EventState.CANCELED;
-                throw new IllegalStateException("Отклонять можно только PENDING");
+                throw new IllegalStateException("Cancel is only allowed from PENDING");
         }
 
-        throw new IllegalArgumentException("Неизвестное действие");
+        throw new IllegalArgumentException("Unknown action");
     }
 }
