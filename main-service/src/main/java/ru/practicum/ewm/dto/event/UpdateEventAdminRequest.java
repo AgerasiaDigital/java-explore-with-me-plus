@@ -12,6 +12,8 @@ import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.event.StateAction;
 
+import java.time.LocalDateTime;
+
 @Data
 public class UpdateEventAdminRequest { // TODO: patch-поведение
     @Pattern(regexp = "^(?!\\s*$).+") // допускает null
@@ -27,7 +29,7 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
     private String description;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String eventDate;
+    private LocalDateTime eventDate;
 
     @Valid
     @JsonProperty("location")
@@ -82,6 +84,10 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
         return title != null;
     }
 
+    public boolean hasEventDate() {
+        return eventDate != null;
+    }
+
     public void applyTo(Event event, Category category, Location location, EventState eventState) {
         if (hasTitle()) {
             event.setTitle(title);
@@ -117,6 +123,10 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
         if (hasStateAction()) {
             event.setState(eventState);
+        }
+
+        if (hasEventDate()) {
+            event.setEventDate(eventDate);
         }
     }
 }
