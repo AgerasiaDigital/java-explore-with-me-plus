@@ -11,7 +11,6 @@ public class UserShortDto {
     private Long id;
 
     @NotBlank
-    @Size(min = 2)
-    @Size(max = 250)
+    @Size(min = 2, max = 250)
     private String name;
 }
