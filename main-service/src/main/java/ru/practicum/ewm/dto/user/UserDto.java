@@ -9,14 +9,12 @@ import lombok.Data;
 public class UserDto {
     @NotBlank
     @Email
-    @Size(min = 6)
-    @Size(max = 254)
+    @Size(min = 6, max = 254)
     private String email;
 
     private Long id;
 
     @NotBlank
-    @Size(min = 2)
-    @Size(max = 250)
+    @Size(min = 2, max = 250)
     private String name;
 }
