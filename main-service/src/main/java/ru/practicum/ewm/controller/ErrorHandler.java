@@ -2,7 +2,6 @@ package ru.practicum.ewm.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -18,7 +17,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,13 +36,18 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        List<String> errors = e.getBindingResult().getFieldErrors().stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
+        Map<String, String> errors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach((error) -> {
+            String fieldName = error.getField();
+            String errorMessage = error.getDefaultMessage();
 
-        return new ApiError(String.join(". ", errors),
-                e.getMessage(),
-                "Method arguments was not valid",
+            errors.put(fieldName, errorMessage);
+        });
+
+        return new ApiError(errors.entrySet().stream()
+                    .map(entry -> entry.getKey() + ": " + entry.getValue())
+                    .collect(Collectors.joining("; ")),
+                "Request parameters was not valid",
                 HttpStatus.BAD_REQUEST.name(),
                 LocalDateTime.now().format(formatter));
     }
@@ -57,11 +62,8 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        String stackTrace = stringWriter.toString();
-
-        return new ApiError(stackTrace,
-                e.getMessage(),
-                "Недопустимое значение параметра",
+        return new ApiError(e.getMessage(),
+                "Invalid operation",
                 HttpStatus.BAD_REQUEST.name(),
                 LocalDateTime.now().format(formatter));
     }
@@ -76,11 +78,8 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        String stackTrace = stringWriter.toString();
-
-        return new ApiError(stackTrace,
-                e.getMessage(),
-                "The required object was not found",
+        return new ApiError(e.getMessage(),
+                "Required object was not found",
                 HttpStatus.NOT_FOUND.name(),
                 LocalDateTime.now().format(formatter));
     }
@@ -95,10 +94,7 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        String stackTrace = stringWriter.toString();
-
-        return new ApiError(stackTrace,
-                e.getMessage(),
+        return new ApiError(e.getMessage(),
                 "Parameter value conflict",
                 HttpStatus.CONFLICT.name(),
                 LocalDateTime.now().format(formatter));
@@ -114,8 +110,7 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        return new ApiError(String.format("Constraint name: %s. Kind: %s", e.getConstraintName(), e.getKind()),
-                e.getMessage(),
+        return new ApiError(e.getConstraintName() + ": " + e.getKind(),
                 "Integrity constraint has been violated",
                 HttpStatus.CONFLICT.name(),
                 LocalDateTime.now().format(formatter));
@@ -131,10 +126,7 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        String stackTrace = stringWriter.toString();
-
-        return new ApiError(stackTrace,
-                e.getMessage(),
+        return new ApiError(e.getMessage(),
                 "Unexpected error",
                 HttpStatus.INTERNAL_SERVER_ERROR.name(),
                 LocalDateTime.now().format(formatter));
@@ -150,11 +142,8 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        String stackTrace = stringWriter.toString();
-
-        return new ApiError(stackTrace,
-                e.getMessage(),
-                "Conflict",
+        return new ApiError(e.getMessage(),
+                "Illegal state value",
                 HttpStatus.CONFLICT.name(),
                 LocalDateTime.now().format(formatter));
     }
@@ -169,13 +158,9 @@ public class ErrorHandler {
 
         e.printStackTrace(printWriter);
 
-        String stackTrace = stringWriter.toString();
-
-        return new ApiError(stackTrace,
-                e.getMessage(),
-                "Missing required params",
+        return new ApiError("Missing required parameter: " + e.getParameterName() + " (" + e.getParameterType() + ")",
+                "Missing required parameters",
                 HttpStatus.BAD_REQUEST.name(),
                 LocalDateTime.now().format(formatter));
     }
-
 }
