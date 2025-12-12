@@ -11,7 +11,7 @@ public class StatClientConfig {
 
     @Bean
     public StatClient statClient(
-            @Value("${stat-service.url:http://stats-server:9090}") String statUrl) {
+            @Value("${stats-server.url:http://stats-server:9090}") String statUrl) {
         return new StatClientImpl(statUrl);
     }
 }
