@@ -7,6 +7,8 @@ import lombok.Data;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.dto.user.UserShortDto;
 
+import java.time.LocalDateTime;
+
 @Data
 public class EventShortDto {
     @NotBlank
@@ -19,7 +21,7 @@ public class EventShortDto {
 
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private String eventDate;
+    private LocalDateTime eventDate;
 
     private Long id;
 

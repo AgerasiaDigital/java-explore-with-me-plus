@@ -37,7 +37,7 @@ public class EventController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId,
                                @Valid @RequestBody NewEventDto newEventDto, HttpServletRequest request) throws IOException {
-        log.info("Запрос на создание события, userId={}", userId);
+        log.info("Request to create event, userId={}", userId);
         log.debug("newEventDto: {}", newEventDto);
         return eventService.create(userId, newEventDto);
     }
@@ -46,10 +46,10 @@ public class EventController {
     public Collection<EventShortDto> getEventsOfUser(@PathVariable Long userId,
                                                      EventInitiatorIdFilter eventInitiatorIdFilter,
                                                      PageRequestDto pageRequestDto) {
-        log.info("Запрос событий пользователя, userId={}", userId);
+        log.info("User event request, userId={}", userId);
         Collection<EventShortDto> events = eventService.getEventByUserId(eventInitiatorIdFilter,
                 pageRequestDto.toPageable());
-        log.info("Найдено событий: {}", events.size());
+        log.info("Found events: {}", events.size());
         events.forEach(ev -> log.debug("EVENT: {}", ev));
         return events;
     }
@@ -57,7 +57,7 @@ public class EventController {
     @GetMapping("/users/{userId}/events/{eventId}")
     public EventFullDto getEventFullDescription(@PathVariable Long userId,
                                                 @PathVariable Long eventId) {
-        log.info("Запрос пользователем события с подробных описанием, userId={}, eventId={}", userId, eventId);
+        log.info("User requested the event with detailed description, userId={}, eventId={}", userId, eventId);
         EventFullDto eventFullDto = eventService.getEventFullDescription(userId, eventId);
         log.debug("EVENTS: {}", eventFullDto);
         return eventFullDto;
@@ -67,7 +67,7 @@ public class EventController {
     public EventFullDto updateEventByCreator(@PathVariable Long userId,
                                              @PathVariable Long eventId,
                                              @Valid @RequestBody UpdateEventRequest updateEventRequest) {
-        log.info("Запрос на редактирование события пользователем, userId={}, eventId={}", userId, eventId);
+        log.info("Event edit request by user, userId={}, eventId={}", userId, eventId);
         log.debug("{}", updateEventRequest);
         EventFullDto eventFullDto = eventService.updateEventByCreator(userId, eventId, updateEventRequest);
         log.debug("EVENTS: {}", eventFullDto);
@@ -77,7 +77,7 @@ public class EventController {
     @GetMapping("/users/{userId}/events/{eventId}/requests")
     public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable Long userId,
                                                                      @PathVariable Long eventId) {
-        log.info("Запрос участия пользователя в событиях, userId={}, eventId={}", userId, eventId);
+        log.info("User event participation request, userId={}, eventId={}", userId, eventId);
         List<ParticipationRequestDto> participationRequestDto = requestService.getEventParticipants(userId, eventId);
         log.debug("EVENTS: {}", participationRequestDto);
         return participationRequestDto;
@@ -87,7 +87,7 @@ public class EventController {
     public EventRequestStatusUpdateResult changeStatusRequest(@PathVariable Long userId,
                                                               @PathVariable Long eventId,
                                                               @Valid @RequestBody EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
-        log.info("Запрос на изменение статуса заявок на участии в событии eventId={}, пользователь userId={}", eventId, userId);
+        log.info("Request to change the status of event participation eventId={}, user userId={}", eventId, userId);
         EventRequestStatusUpdateResult eventRequestStatusUpdateResult = requestService.changeRequestStatus(userId,
                 eventId,
                 eventRequestStatusUpdateRequest);
@@ -98,7 +98,7 @@ public class EventController {
     @PatchMapping("/admin/events/{eventId}")
     public EventFullDto updateEventByAdmin(@PathVariable Long eventId,
                                            @Valid @RequestBody UpdateEventRequest updateEventRequest) {
-        log.info("Запрос на редактирование события админом, eventId={}", eventId);
+        log.info("Request to edit the event by the admin, eventId={}", eventId);
         log.debug("{}", updateEventRequest);
 
         EventFullDto eventFullDto = eventService.updateEventByAdmin(eventId, updateEventRequest);
@@ -109,7 +109,7 @@ public class EventController {
     @GetMapping("/admin/events")
     public List<EventFullDto> getEventsAdmin(EventAdminFilter eventAdminFilter,
                                              PageRequestDto pageRequestDto) {
-        log.debug("Админский запрос событий с параметрами: {}", eventAdminFilter);
+        log.debug("Admin event request with parameters: {}", eventAdminFilter);
         return eventService.adminSearchEvents(eventAdminFilter, pageRequestDto);
     }
 
@@ -117,8 +117,8 @@ public class EventController {
     public List<EventFullDto> getEvents(@Valid EventPublicFilter eventPublicFilter,
                                         PageRequestDto pageRequestDto,
                                         HttpServletRequest request) {
-        log.info("Публичный запрос событий с параметрами: {}", eventPublicFilter);
-        log.debug("Параметры запроса: {}", eventPublicFilter);
+        log.info("Public query of events with parameters: {}", eventPublicFilter);
+        log.debug("Request parameters: {}", eventPublicFilter);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
         return eventService.publicSearchEvents(eventPublicFilter, pageRequestDto);
@@ -127,7 +127,7 @@ public class EventController {
     @GetMapping("/events/{eventId}")
     public EventFullDto getEvent(@PathVariable Long eventId,
                                  HttpServletRequest request) {
-        log.info("Публичный запрос подробной информации по событию с id: {}", eventId);
+        log.info("Public request for detailed information on the event with id: {}", eventId);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
         try {
