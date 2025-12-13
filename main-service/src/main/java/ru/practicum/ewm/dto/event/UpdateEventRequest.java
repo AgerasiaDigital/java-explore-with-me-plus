@@ -16,17 +16,12 @@ import java.time.LocalDateTime;
 
 @Data
 public class UpdateEventRequest {
-    // @Pattern(regexp = "^(?!\\s*$).+") // допускает null
-    @Size(min = 20)
-    @Size(max = 2000)
+    @Size(min = 20, max = 2000)
     private String annotation;
 
     private Long category;
 
-    @Size(min = 20)
-    @Size(max = 7000)
-    // TODO возможно надо убрать
-    // @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+    @Size(min = 20, max = 7000)
     private String description;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -45,9 +40,7 @@ public class UpdateEventRequest {
 
     private StateAction stateAction;
 
-    @Size(min = 3)
-    @Size(max = 120)
-    //  @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+    @Size(min = 3, max = 120)
     private String title;
 
     public boolean hasAnnotation() {
@@ -86,6 +79,10 @@ public class UpdateEventRequest {
         return title != null;
     }
 
+    public boolean hasEventDate() {
+        return eventDate != null;
+    }
+
     public void applyTo(Event event, Category category, Location location, EventState eventState) {
         if (hasTitle()) {
             event.setTitle(title);
@@ -121,6 +118,10 @@ public class UpdateEventRequest {
 
         if (hasStateAction()) {
             event.setState(eventState);
+        }
+
+        if (hasEventDate()) {
+            event.setEventDate(eventDate);
         }
     }
 
