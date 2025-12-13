@@ -26,8 +26,4 @@ public class EventPublicFilter {
     public List<Long> getCategory() {
         return categories;
     }
-
-    public Boolean getOnlyAvailable() {
-        return onlyAvailable;
-    }
 }
