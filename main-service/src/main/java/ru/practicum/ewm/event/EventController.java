@@ -114,7 +114,7 @@ public class EventController {
     }
 
     @GetMapping("/events")
-    public List<EventFullDto> getEvents(@Valid EventPublicFilter eventPublicFilter,
+    public List<EventShortDto> getEvents(@Valid EventPublicFilter eventPublicFilter,
                                         PageRequestDto pageRequestDto,
                                         HttpServletRequest request) {
         log.info("Public query of events with parameters: {}", eventPublicFilter);
@@ -130,11 +130,6 @@ public class EventController {
         log.info("Public request for detailed information on the event with id: {}", eventId);
         log.info("client ip: {}", request.getRemoteAddr());
         saveHit(request);
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
         return eventService.getEvent(eventId);
     }
 }

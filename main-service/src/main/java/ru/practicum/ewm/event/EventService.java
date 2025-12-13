@@ -20,7 +20,7 @@ public interface EventService {
 
     List<EventFullDto> adminSearchEvents(EventAdminFilter eventAdminFilter, PageRequestDto pageRequestDto);
 
-    List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto);
+    List<EventShortDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto);
 
     List<ParticipationRequestDto> checkUserEventParticipation(Long userId, Long eventId);
 
