@@ -50,13 +50,6 @@ public class EventServiceImpl implements EventService {
             return Map.of();
         }
 
-        // Небольшая задержка для синхронизации со stat-service (Олежа не забудь)
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
         List<String> uriList = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .toList();
@@ -317,7 +310,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventFullDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto) {
+    public List<EventShortDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto) {
 
         Pageable pageable = pageRequestDto.toPageable();
         EventSort sort = pageRequestDto.getSort();
@@ -348,7 +341,7 @@ public class EventServiceImpl implements EventService {
                     .toList().reversed();
         }
         return events.stream()
-                .map(event -> eventMapper.toFullDto(
+                .map(event -> eventMapper.toShortDto(
                         event,
                         requestsMap.getOrDefault(event.getId(), 0L),
                         viewsMap.getOrDefault(event.getId(), 0L)

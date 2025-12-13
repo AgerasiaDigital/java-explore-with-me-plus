@@ -3,7 +3,6 @@ package ru.practicum.ewm.dto.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.practicum.ewm.model.category.Category;
@@ -15,17 +14,13 @@ import ru.practicum.ewm.model.event.StateAction;
 import java.time.LocalDateTime;
 
 @Data
-public class UpdateEventAdminRequest { // TODO: patch-поведение
-    @Pattern(regexp = "^(?!\\s*$).+") // допускает null
-    @Size(min = 20)
-    @Size(max = 2000)
+public class UpdateEventAdminRequest {
+    @Size(min = 20, max = 2000)
     private String annotation;
 
     private Long category;
 
-    @Size(min = 20)
-    @Size(max = 7000)
-    @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+    @Size(min = 20, max = 7000)
     private String description;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -41,11 +36,9 @@ public class UpdateEventAdminRequest { // TODO: patch-поведение
 
     private Boolean requestModeration;
 
-    private StateAction stateAction; // TODO: enum [ PUBLISH_EVENT, REJECT_EVENT ]
+    private StateAction stateAction;
 
-    @Size(min = 3)
-    @Size(max = 120)
-    @Pattern(regexp = "^(?!\\s*$).+") // допускает null
+    @Size(min = 3, max = 120)
     private String title;
 
     public boolean hasAnnotation() {

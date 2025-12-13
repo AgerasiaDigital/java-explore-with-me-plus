@@ -20,6 +20,7 @@ public class EventSpecification {
                 .and(eventDateAfter(f.getRangeStart()))
                 .and(eventDateBefore(f.getRangeEnd()))
                 .and(states(f.getEventState()))
+                .and(onlyAvailable(f.getOnlyAvailable()))
                 .and(eventDateInFutureIfNoRange(f.getRangeStart(), f.getRangeEnd()));
     }
 
