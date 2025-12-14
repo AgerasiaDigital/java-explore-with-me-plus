@@ -11,6 +11,7 @@ import ru.practicum.statserver.repository.StatRepository;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 @AllArgsConstructor
 @Service
@@ -22,8 +23,8 @@ public class StatServiceImpl implements StatService {
         StatModel statEntity = statRepository.save(StatMapper.createStatModel(endpointHitDto));
     }
 
-    public Collection<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
-                                            Collection<String> uris, Boolean unique) {
+    public List<ViewStatsDto> getStat(LocalDateTime start, LocalDateTime end,
+                                      Collection<String> uris, Boolean unique) {
         if (uris == null || uris.isEmpty()) {
             // Без фильтра по uris - отдельный запрос
             return statRepository.getStatWithoutUris(start, end, unique);

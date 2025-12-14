@@ -1,19 +1,16 @@
 package ru.practicum.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
-import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 
-import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -24,57 +21,73 @@ public class StatClientImpl implements StatClient {
     private final RestClient restClient;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    @Autowired
-    public StatClientImpl(@Value("${stat-service.url:http://localhost:9090}") String statUrl) {
+    public StatClientImpl(String statUrl) {
+        log.info("Stat-client использует url: {}", statUrl);
         restClient = RestClient.builder()
                 .baseUrl(statUrl)
                 .build();
     }
 
-    // TODO: обработка ошибок
     @Override
     public void hit(EndpointHitDto endpointHitDto) {
-        restClient.post()
-                .uri(URI.create("/hit"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(endpointHitDto)
-                .retrieve()
-                .toBodilessEntity();
-
-        log.debug("hit: {}", endpointHitDto);
+        try {
+            restClient.post()
+                    .uri("/hit")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(endpointHitDto)
+                    .retrieve()
+                    .toBodilessEntity();
+            log.debug("Stat-client отправил статистику по url: {}", endpointHitDto);
+        } catch (Exception e) {
+            log.error("Ошибка при отправке статистики: {}", e.getMessage());
+        }
     }
 
-    // TODO: обработка ошибок
     @Override
     public List<ViewStatsDto> getStats(StatsParamDto statsParamDto) {
-        ResponseEntity<List<ViewStatsDto>> response = restClient.get()
-                .uri(uriBuilder -> {
-                    uriBuilder.path("/stats")
-                            .queryParam("start", statsParamDto.getStart().format(formatter))
-                            .queryParam("end", statsParamDto.getEnd().format(formatter));
+        log.info("Запрос статистики для uri: {}", statsParamDto.getUris());
+        log.debug("statsParamDto: {}", statsParamDto);
 
-                    if (statsParamDto.getUris() != null && !statsParamDto.getUris().isEmpty()) {
-                        uriBuilder.queryParam("uris", statsParamDto.getUris());
-                    }
+        try {
+            List<ViewStatsDto> stats = restClient.get()
+                    .uri(uriBuilder -> {
+                        String startEncoded = URLEncoder.encode(
+                                statsParamDto.getStart().format(formatter),
+                                StandardCharsets.UTF_8
+                        );
+                        String endEncoded = URLEncoder.encode(
+                                statsParamDto.getEnd().format(formatter),
+                                StandardCharsets.UTF_8
+                        );
 
-                    if (statsParamDto.getIsUnique() != null) {
-                        uriBuilder.queryParam("unique", statsParamDto.getIsUnique());
-                    }
+                        uriBuilder.path("/stats")
+                                .queryParam("start", startEncoded)
+                                .queryParam("end", endEncoded);
 
-                    return uriBuilder.build();
-                })
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                        if (statsParamDto.getUris() != null && !statsParamDto.getUris().isEmpty()) {
+                            uriBuilder.queryParam("uris", statsParamDto.getUris());
+                        }
 
-        List<ViewStatsDto> stats;
+                        if (statsParamDto.getIsUnique() != null) {
+                            uriBuilder.queryParam("unique", statsParamDto.getIsUnique());
+                        }
 
-        if (response == null) {
-            log.warn("no stats for: {}", statsParamDto);
-            stats = Collections.emptyList();
-        } else {
-            stats = response.getBody();
+                        return uriBuilder.build();
+                    })
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            if (stats == null) {
+                log.warn("Отсутствует статистика посещений для: {}", statsParamDto);
+                return Collections.emptyList();
+            }
+
+            log.debug("Выгружена статистика: {}", stats);
+            return stats;
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики: {}", e.getMessage());
+            return Collections.emptyList();
         }
-
-        return stats;
     }
 }
